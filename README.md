@@ -21,7 +21,8 @@ arredondados, fundo no estilo Mica, prévia ao vivo da barra e tema claro ou esc
 
 ## Virar Windows 11 com um comando
 
-Na sessão KDE, execute **sem sudo**:
+Funciona até num **Ubuntu 26.04 recém-instalado**, que vem só com o GNOME. Abra o Terminal
+e execute **sem sudo** (pode ser no GNOME ou já no KDE):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Rk7gamerYT/kde-windows-style/main/windows11.sh | bash
@@ -30,7 +31,8 @@ curl -fsSL https://raw.githubusercontent.com/Rk7gamerYT/kde-windows-style/main/w
 Esse único script faz tudo sozinho, sem passos manuais:
 
 1. Instala as ferramentas do sistema que faltarem (pede sua senha uma vez, só se precisar),
-   no Ubuntu/Debian, Fedora, Arch ou openSUSE.
+   no Ubuntu/Debian, Fedora, Arch ou openSUSE. No Ubuntu sem KDE, instala também o KDE Plasma,
+   ao lado do GNOME, sem trocar a tela de login.
 2. Instala o app no seu usuário e prepara a interface gráfica.
 3. Prepara o DoorOS-Dolphin: já vem pronto no pacote completo; baixando do GitHub no
    Ubuntu/Debian, é compilado uma única vez (10 a 20 minutos).
@@ -38,6 +40,11 @@ Esse único script faz tudo sozinho, sem passos manuais:
    janelas do Windows 11, menus translúcidos, barra com clima, Iniciar, Pesquisar, Visão de
    tarefas, configurações rápidas, sino de notificações, apps em segundo plano na seta ^ e
    os atalhos do Windows da tabela abaixo.
+
+Rodando a partir do GNOME, o script termina pedindo uma coisa só: saia da sessão e, na tela
+de login, escolha **Plasma** no ícone de engrenagem antes de entrar. O visual é aplicado
+sozinho nesse primeiro login e uma notificação avisa quando termina. O GNOME continua
+disponível na mesma tela.
 
 Para escolher outras opções, passe-as depois de `bash -s --`, por exemplo
 `... | bash -s -- --theme light --opacity 94`. `--no-dooros` pula o DoorOS-Dolphin e

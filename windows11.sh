@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # One command installs everything and applies the full Windows 11 look:
 #   curl -fsSL https://raw.githubusercontent.com/Rk7gamerYT/kde-windows-style/main/windows11.sh | bash
-# It installs missing system tools (asks for your password once), the app, the taskbar widgets,
-# DoorOS-Dolphin and the theme, then applies everything with a backup.
+# It installs missing system tools (asks for your password once), KDE Plasma itself when the system
+# only has GNOME (a stock Ubuntu 26.04), the app, the taskbar widgets, DoorOS-Dolphin and the theme,
+# then applies everything with a backup: right away in a Plasma session, or at the first Plasma login.
 # Extra options go to profile.py, e.g. `bash -s -- --theme light --opacity 94`.
 # Own options: --no-dooros (skip DoorOS-Dolphin), --no-deps (do not install system packages).
 set -euo pipefail
@@ -14,8 +15,8 @@ PROFILE_ARGS=()
 for arg in "$@"; do
     case "$arg" in
         --dry-run)
-            echo "Instalar ferramentas do sistema que faltarem, o app em $APP_DIR, os widgets da barra e o DoorOS-Dolphin;"
-            echo "aplicar visual Windows 11, menu Iniciar, barra, bandeja e atalhos, com backup."
+            echo "Instalar o KDE Plasma se faltar, as ferramentas do sistema, o app em $APP_DIR, os widgets da barra e o DoorOS-Dolphin;"
+            echo "aplicar visual Windows 11, menu Iniciar, barra, bandeja e atalhos, com backup (agora no Plasma, ou no primeiro login nele)."
             echo "Desfazer depois: $APP_DIR/kde-windows-style.sh --restore"
             exit 0 ;;
         --no-dooros) DOOROS=0 ;;
@@ -24,9 +25,8 @@ for arg in "$@"; do
     esac
 done
 if [[ $EUID == 0 ]]; then echo 'Execute sem sudo; a senha é pedida só se precisar instalar pacotes.' >&2; exit 1; fi
-if [[ ":${XDG_CURRENT_DESKTOP^^}:" != *:KDE:* ]]; then
-    echo 'Entre numa sessão KDE Plasma 6 e rode este comando de novo.' >&2; exit 1
-fi
+IN_KDE=0
+if [[ ":${XDG_CURRENT_DESKTOP^^}:" == *:KDE:* ]]; then IN_KDE=1; fi
 if [[ -e "$APP_DIR" && ! -f "$APP_DIR/.managed" ]]; then
     echo "A pasta $APP_DIR já existe e não pertence ao instalador." >&2; exit 1
 fi
@@ -38,7 +38,10 @@ if [[ $DEPS == 1 ]]; then
     step 'Conferindo ferramentas do sistema'
     if command -v apt-get >/dev/null; then
         PM=(apt-get install -y --no-install-recommends)
-        NEEDS="qdbus6:qdbus-qt6 gdbus:libglib2.0-bin kwriteconfig6:libkf6config-bin kreadconfig6:libkf6config-bin
+        # plasmashell: a stock Ubuntu comes with GNOME only. Plasma is added next to it (GNOME stays),
+        # without SDDM: the current login screen offers the new "Plasma" session.
+        NEEDS="plasmashell:kde-plasma-desktop plasmashell:plasma-session-wayland plasmashell:kwin-wayland
+               systemsettings:systemsettings dolphin:dolphin qdbus6:qdbus-qt6 gdbus:libglib2.0-bin kwriteconfig6:libkf6config-bin kreadconfig6:libkf6config-bin
                curl:curl nmcli:network-manager pactl:pulseaudio-utils bluetoothctl:bluez rfkill:rfkill patch:patch
                spectacle:kde-spectacle krunner:plasma-workspace"
     elif command -v dnf >/dev/null; then
@@ -114,6 +117,14 @@ if [[ $DOOROS == 1 ]]; then
 fi
 
 # 4. Theme, icons, window borders, Start menu, taskbar widgets, tray and shortcuts, with a backup.
-step 'Aplicando o visual Windows 11'
-python3 "$APP_DIR/profile.py" "${PROFILE_ARGS[@]}"
-printf '\nPronto. O app KDE Windows Style está no menu Iniciar para ajustes finos.\n'
+#    Plasma must be running for that, so from GNOME it waits for the first Plasma login.
+if [[ $IN_KDE == 1 ]]; then
+    step 'Aplicando o visual Windows 11'
+    python3 "$APP_DIR/profile.py" "${PROFILE_ARGS[@]}"
+    printf '\nPronto. O app KDE Windows Style está no menu Iniciar para ajustes finos.\n'
+else
+    step 'Deixando o visual pronto para o primeiro login no Plasma'
+    bash "$APP_DIR/first-login.sh" --schedule "${PROFILE_ARGS[@]}"
+    printf '\nPronto. Saia da sessão e, na tela de login, escolha "Plasma" (ícone de engrenagem) antes de entrar.\n'
+    printf 'O visual Windows 11 é aplicado sozinho nesse primeiro login. O GNOME continua disponível.\n'
+fi
