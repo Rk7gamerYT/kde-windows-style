@@ -100,6 +100,7 @@ class ProfileTests(unittest.TestCase):
                  patch.object(p,'STATE',state),patch.object(p,'prerequisites'), \
                  patch.object(p,'backup',return_value=Path(tmp)/'backup'),patch.object(p,'install_menu'), \
                  patch.object(p,'install_theme'),patch.object(p,'write_config'),patch.object(p,'set_shortcuts'), \
+                 patch.object(p,'install_decoration'), \
                  patch.object(p,'apply_panel',return_value={'id':3,'order':'28;6;8;23;24'}), \
                  patch.object(p,'run',side_effect=record), \
                  patch.object(p,'stop_plasma',side_effect=lambda:calls.append(('stop',))), \
@@ -109,3 +110,28 @@ class ProfileTests(unittest.TestCase):
         self.assertLess(calls.index(('stop',)),order_call)
         self.assertLess(order_call,calls.index(('start',)))
         self.assertEqual(calls[order_call][-1],'28;6;8;23;24')
+
+
+class DecorationTests(unittest.TestCase):
+    def test_decoration_is_installed_under_its_own_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            written={}
+            with patch.object(p,'DATA',Path(tmp)), \
+                 patch.object(p,'write_config',side_effect=lambda f,g,k,v:written.__setitem__((f,g,k),v)):
+                p.install_decoration(dark=True)
+            for variant in ['dark','light']:
+                theme=Path(tmp)/'aurorae/themes'/('KDEWindowsWin11-'+variant)
+                self.assertTrue((theme/('KDEWindowsWin11-'+variant+'rc')).is_file())
+                self.assertIn('Name=KDEWindowsWin11-'+variant,(theme/'metadata.desktop').read_text())
+            self.assertEqual(written[('kwinrc','org.kde.kdecoration2','theme')],'__aurorae__svg__KDEWindowsWin11-dark')
+            self.assertEqual(written[('kwinrc','org.kde.kdecoration2','library')],'org.kde.kwin.aurorae')
+
+    def test_old_backups_do_not_touch_breezerc(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); config=root/'config'; config.mkdir(); backup=root/'backup'; backup.mkdir()
+            (config/'breezerc').write_text('[Style]\nMenuOpacity=60\n')
+            (backup/'manifest.json').write_text(json.dumps({'owned':[],'shortcuts':[]}))
+            with patch.object(p,'CONFIG',config),patch.object(p,'OWNED',[]),patch.object(p,'stop_plasma'), \
+                 patch.object(p,'start_plasma'),patch.object(p,'set_shortcuts'),patch.object(p,'run'),patch.object(p,'install_menu'):
+                p.restore(backup)
+            self.assertTrue((config/'breezerc').exists())
