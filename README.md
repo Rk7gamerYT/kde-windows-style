@@ -151,6 +151,11 @@ O binário é instalado dentro deste pacote, sem sobrescrever `/usr/bin/dolphin`
 A janela imita o Explorador de Arquivos do Windows 11: abas na barra de título,
 botões de minimizar/maximizar/fechar desenhados no padrão Fluent (fechar fica vermelho),
 cantos de 8 px e pesquisa que mostra a pasta atual (“Pesquisar em Imagens”).
+Com o **efeito Mica**, as abas e as barras de navegação e de comandos deixam o fundo
+aparecer desfocado e tingido pela cor do tema, enquanto a lista de arquivos e o painel
+lateral continuam sólidos, como no Explorador. O Mica usa o desfoque do KWin e pode ser
+ligado ou desligado na aba DoorOS-Dolphin do app (ou com `Mica=false` no grupo
+`[DoorOS]` de `~/.config/dolphinrc`); sem o desfoque disponível, a janela fica sólida.
 
 ![DoorOS-Dolphin](assets/dooros.png)
 
