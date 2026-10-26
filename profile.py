@@ -177,8 +177,8 @@ def restore(location):
         run('qdbus6', 'org.kde.KWin', '/KWin', 'org.kde.KWin.reconfigure')
     finally:
         start_plasma()
-    if shutil.which('kbuildsycoca6'):
-        run('kbuildsycoca6', '--noincremental')
+    # Restoring appearance must not uninstall the graphical configuration app.
+    install_menu()
     print('Perfil anterior restaurado de:', location)
 
 

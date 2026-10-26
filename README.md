@@ -126,7 +126,7 @@ Antes de aplicar um perfil, o app cria um backup em:
 
 **Restaurar visual anterior** volta ao backup original, mesmo após reaplicar o perfil.
 Isso restaura as configurações e o layout do backup: widgets e mudanças de layout
-feitos posteriormente também podem ser desfeitos. A interface pede confirmação.
+feitos posteriormente também podem ser desfeitos. A interface pede confirmação. O app de configuração continua instalado após restaurar.
 A troca do gerenciador padrão é desfeita pelo botão da aba DoorOS-Dolphin.
 
 Por terminal, dentro da pasta do app:

@@ -34,7 +34,7 @@ class ProfileTests(unittest.TestCase):
             with patch.object(p, 'CONFIG', config), patch.object(p, 'STATE', root/'state'), \
                  patch.object(p, 'OWNED', [owned,new]), patch.object(p, 'stop_plasma'), \
                  patch.object(p, 'start_plasma'), patch.object(p, 'snapshot_shortcuts', return_value=[]), \
-                 patch.object(p, 'set_shortcuts'), patch.object(p, 'run'):
+                 patch.object(p, 'set_shortcuts'), patch.object(p, 'run'), patch.object(p,'install_menu'):
                 backup=p.backup()
                 (config/'kdeglobals').write_text('changed')
                 (config/'kwinrc').write_text('new')
