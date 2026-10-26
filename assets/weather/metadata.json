@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Rk7gamerYT"
+            }
+        ],
+        "Category": "Environment and Weather",
+        "Description": "Temperatura e previsão na barra, como no Windows 11",
+        "Description[en]": "Temperature and forecast on the taskbar, like Windows 11",
+        "Icon": "weather-clear",
+        "Id": "org.kdewindowsstyle.weather",
+        "License": "MIT",
+        "Name": "Clima",
+        "Name[en]": "Weather",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

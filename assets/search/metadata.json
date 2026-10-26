@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Rk7gamerYT"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "Caixa de pesquisa da barra de tarefas, como no Windows 11",
+        "Description[en]": "Taskbar search box, like Windows 11",
+        "Icon": "search",
+        "Id": "org.kdewindowsstyle.search",
+        "License": "MIT",
+        "Name": "Pesquisar",
+        "Name[en]": "Search",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

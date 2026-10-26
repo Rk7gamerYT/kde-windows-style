@@ -39,8 +39,10 @@ OWNED += [DATA/'color-schemes'/name for name in ['KDEWindowsWin11Dark.colors','K
 OWNED += [DATA/'plasma/plasmoids/menu.11.next',DATA/'kde-windows-style/start-menu-icon.svg']
 DECORATION = 'KDEWindowsWin11'
 OWNED += [DATA/'aurorae/themes'/(DECORATION+suffix) for suffix in ['-dark', '-light']]
+# Taskbar widgets of this project, in assets/<name>: id is org.kdewindowsstyle.<name>.
+WIDGETS = ['quicksettings', 'weather', 'search', 'taskview']
 QUICK_SETTINGS = 'org.kdewindowsstyle.quicksettings'
-OWNED += [DATA/'plasma/plasmoids'/QUICK_SETTINGS]
+OWNED += [DATA/'plasma/plasmoids'/('org.kdewindowsstyle.'+name) for name in WIDGETS]
 TRAY_AUTOSTART = CONFIG/'autostart/kde-windows-style-tray.desktop'
 OWNED += [TRAY_AUTOSTART]
 META, ALT, CTRL, SHIFT = 0x10000000, 0x08000000, 0x04000000, 0x02000000
@@ -362,11 +364,21 @@ def install_menu11():
     print('Menu11 Next 1.3 instalado, de Eisteed.')
 
 
-def install_quicksettings():
-    target=DATA/'plasma/plasmoids'/QUICK_SETTINGS
-    if target.exists():shutil.rmtree(target)
-    shutil.copytree(ROOT/'assets/quicksettings', target)
-    (target/'contents/code/status.sh').chmod(0o755)
+def install_widgets():
+    for name in WIDGETS:
+        target=DATA/'plasma/plasmoids'/('org.kdewindowsstyle.'+name)
+        if target.exists():shutil.rmtree(target)
+        shutil.copytree(ROOT/'assets'/name, target)
+    (DATA/'plasma/plasmoids'/QUICK_SETTINGS/'contents/code/status.sh').chmod(0o755)
+
+
+def default_city():
+    """The city of the system time zone, e.g. America/Sao_Paulo -> Sao Paulo."""
+    try:
+        zone=run('timedatectl', 'show', '-p', 'Timezone', '--value')
+    except (RuntimeError, OSError, subprocess.SubprocessError):
+        zone=os.environ.get('TZ', '')
+    return zone.rsplit('/', 1)[-1].replace('_', ' ') if '/' in zone else ''
 
 
 def tray_overflow(enabled):
@@ -425,9 +437,10 @@ def install_menu():
         run('kbuildsycoca6', '--noincremental')
 
 
-def apply_panel(launcher='menu11', align='center', size='normal', recommended=True, tray='win11'):
+def apply_panel(launcher='menu11', align='center', size='normal', recommended=True, tray='win11',
+                weather=True, city='', fahrenheit=False, search=True, taskview=True):
     if launcher=='menu11':install_menu11()
-    if tray=='win11':install_quicksettings()
+    install_widgets()
     icon=install_start_icon()
     menu_type='menu.11.next' if launcher=='menu11' else 'org.kde.plasma.kickoff'
     result = script('''
@@ -497,19 +510,40 @@ def apply_panel(launcher='menu11', align='center', size='normal', recommended=Tr
     var quick = win11Tray ? ensure(%s) : null;
     var bell = win11Tray ? ensure("org.kde.plasma.notifications") : null;
     var desktop = ensure("org.kde.plasma.showdesktop");
+    var items = %s;
+    function optional(type, wanted) {
+        if (wanted) return ensure(type);
+        panel.widgets().forEach(w => { if (w.type === type) w.remove(); });
+        return null;
+    }
+    var weather = optional("org.kdewindowsstyle.weather", items.weather);
+    if (weather) {
+        weather.currentConfigGroup = ["General"];
+        if (items.city) weather.writeConfig("city", items.city);
+        weather.writeConfig("fahrenheit", items.fahrenheit);
+    }
+    var search = optional("org.kdewindowsstyle.search", items.search);
+    var taskview = optional("org.kdewindowsstyle.taskview", items.taskview);
     var all = panel.widgets();
-    var start = (center ? [left.id] : []).concat([menu.id, tasks.id, right.id]);
+    // Windows 11: weather at the far left, then Start, Search, Task view and the apps in the middle.
+    // With a left-aligned taskbar the weather moves next to the tray.
+    var apps = [menu.id].concat(search ? [search.id] : []).concat(taskview ? [taskview.id] : []).concat([tasks.id]);
+    var start = (center ? (weather ? [weather.id] : []).concat([left.id]) : []).concat(apps).concat([right.id])
+        .concat(!center && weather ? [weather.id] : []);
     var end = [tray.id].concat(quick ? [quick.id] : []).concat([clock.id]).concat(bell ? [bell.id] : []).concat([desktop.id]);
     var fixed = start.concat(end);
     var removed = ["org.kde.plasma.pager","org.kde.plasma.marginsseparator","org.kde.plasma.panelspacer",
-                   "menu.11.next","org.kde.plasma.kickoff","org.kde.plasma.kicker","org.kde.plasma.kickerdash"];
+                   "menu.11.next","org.kde.plasma.kickoff","org.kde.plasma.kicker","org.kde.plasma.kickerdash",
+                   "org.kdewindowsstyle.weather","org.kdewindowsstyle.search","org.kdewindowsstyle.taskview"];
     var middle = all.filter(w => fixed.indexOf(w.id) < 0 && removed.indexOf(w.type) < 0);
     panel.currentConfigGroup = ["General"];
     var order = start.concat(middle.map(w => w.id)).concat(end).join(";");
     panel.writeConfig("AppletOrder", order);
     print(JSON.stringify({id:panel.id, order:order, opacity:panel.opacity, height:panel.height}));
     ''' % (40 if size=='small' else 48, json.dumps(align=='center'), json.dumps(menu_type), json.dumps(icon),
-           json.dumps(recommended), json.dumps(tray=='win11'), json.dumps(QUICK_SETTINGS), json.dumps(QUICK_SETTINGS)))
+           json.dumps(recommended), json.dumps(tray=='win11'), json.dumps(QUICK_SETTINGS), json.dumps(QUICK_SETTINGS),
+           json.dumps({'weather': weather, 'city': city or default_city(), 'fahrenheit': fahrenheit,
+                       'search': search, 'taskview': taskview})))
     print('Painel configurado:', result)
     return json.loads(result)
 
@@ -550,6 +584,11 @@ def main():
     parser.add_argument('--no-recommended', action='store_true', help='esconder a seção Recomendados do menu Iniciar')
     parser.add_argument('--tray', choices=['win11','plasma'], default='win11',
                         help='win11: configurações rápidas e sino de notificações como no Windows 11')
+    parser.add_argument('--no-weather', action='store_true', help='sem o clima na barra')
+    parser.add_argument('--weather-city', default='', help='cidade do clima (padrão: a do fuso horário)')
+    parser.add_argument('--fahrenheit', action='store_true')
+    parser.add_argument('--no-search', action='store_true', help='sem a caixa Pesquisar')
+    parser.add_argument('--no-taskview', action='store_true', help='sem o botão Visão de tarefas')
     args = parser.parse_args()
     if not 50 <= args.opacity <= 100:
         parser.error('--opacity deve ficar entre 50 e 100')
@@ -591,7 +630,9 @@ def main():
             if not args.appearance_only:
                 write_config('kdeglobals', 'KDE', 'SingleClick', 'false')
                 write_config('kwinrc', 'ModifierOnlyShortcuts', 'Meta', 'org.kde.plasmashell,/PlasmaShell,org.kde.PlasmaShell,activateLauncherMenu')
-                panel_state = apply_panel(args.launcher, args.taskbar_align, args.taskbar_size, not args.no_recommended, args.tray)
+                panel_state = apply_panel(args.launcher, args.taskbar_align, args.taskbar_size, not args.no_recommended, args.tray,
+                                          not args.no_weather, args.weather_city, args.fahrenheit,
+                                          not args.no_search, not args.no_taskview)
                 tray_overflow(args.tray == 'win11')
                 panel_id = panel_state['id']
                 panel_order = panel_state['order']

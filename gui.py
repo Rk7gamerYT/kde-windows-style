@@ -9,7 +9,7 @@ from PySide6.QtCore import QPointF, QProcess, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import (QColor, QFont, QGuiApplication, QIcon, QLinearGradient, QPainter, QPainterPath,
     QPalette, QPen, QRadialGradient)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFrame, QGridLayout, QHBoxLayout,
-    QInputDialog, QLabel, QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit,
+    QInputDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit,
     QProgressBar, QPushButton, QScrollArea, QSizePolicy, QSlider, QStackedWidget, QStyle,
     QStyledItemDelegate, QVBoxLayout, QWidget)
 
@@ -91,6 +91,9 @@ def stylesheet(t):
     QComboBox{{background:{t['control']};border:1px solid {t['control_stroke']};border-bottom-color:{t['control_bottom']};
         border-radius:5px;padding:5px 12px;min-height:22px;min-width:150px;}}
     QComboBox:hover{{background:{t['control_hover']};}}
+    QLineEdit{{background:{t['control']};border:1px solid {t['control_stroke']};border-bottom:2px solid {t['control_bottom']};
+        border-radius:5px;padding:5px 10px;min-height:22px;selection-background-color:{t['accent']};selection-color:{t['on_accent']};}}
+    QLineEdit:focus{{background:{t['field']};border-bottom-color:{t['accent']};}}
     QComboBox::drop-down{{border:none;width:30px;}}
     QComboBox::down-arrow{{image:url({chevron(t['secondary'])});width:12px;height:12px;}}
     QComboBox QAbstractItemView{{background:{t['card']};border:1px solid {t['stroke']};border-radius:8px;padding:4px;
@@ -383,6 +386,22 @@ class Window(QMainWindow):
         self.win11_tray = Toggle(); self.win11_tray.setChecked(self.prefs.get('tray', 'win11')=='win11')
         layout.addWidget(card('Bandeja do Windows 11', 'Wi-Fi, som e bateria num só botão de configurações rápidas, sino de notificações '
                               'ao lado do relógio e apps em segundo plano agrupados na seta ^, inclusive os que abrirem depois.', self.win11_tray, 'preferences-system-notifications'))
+        layout.addWidget(label('Itens da barra de tarefas', 'section'))
+        self.weather = Toggle(); self.weather.setChecked(self.prefs.get('weather', True))
+        self.city = QLineEdit(self.prefs.get('weather_city', '')); self.city.setMinimumWidth(170)
+        self.city.setPlaceholderText('Cidade (automática)')
+        self.unit = self.choice([('°C', 'c'), ('°F', 'f')], 'weather_unit', 'c')
+        self.unit.setStyleSheet('min-width:56px;')
+        weather = QWidget(); row = QHBoxLayout(weather); row.setContentsMargins(0, 0, 0, 0); row.setSpacing(8)
+        row.addWidget(self.city); row.addWidget(self.unit); row.addWidget(self.weather)
+        layout.addWidget(card('Clima', 'Temperatura e previsão no canto esquerdo. Sem cidade, usa a do fuso horário.',
+                              weather, 'weather-few-clouds'))
+        self.search = Toggle(); self.search.setChecked(self.prefs.get('search', True))
+        layout.addWidget(card('Pesquisar', 'Caixa de pesquisa ao lado do Iniciar. Abre o KRunner para apps, arquivos e cálculos.',
+                              self.search, 'search'))
+        self.taskview = Toggle(); self.taskview.setChecked(self.prefs.get('taskview', True))
+        layout.addWidget(card('Visão de tarefas', 'Botão que mostra todas as janelas e áreas de trabalho, como Win + Tab.',
+                              self.taskview, 'view-app-grid-symbolic'))
         layout.addWidget(label('Personalização', 'section'))
         layout.addWidget(card('Modo de cor', 'Tema claro ou escuro para o Plasma e os aplicativos.', self.theme, 'preferences-desktop-color'))
         self.style=QComboBox(); self.style.addItem('Win11OS · comunidade','win11'); self.style.addItem('Breeze · KDE','breeze')
@@ -409,7 +428,10 @@ class Window(QMainWindow):
         # These live in the taskbar layout, so changing them needs the layout step.
         for combo in (self.launcher, self.taskbar_align, self.taskbar_size):
             combo.currentIndexChanged.connect(lambda _index:self.layout_options.setChecked(True))
-        for toggle in (self.recommended, self.win11_tray):toggle.toggled.connect(lambda _on:self.layout_options.setChecked(True))
+        for toggle in (self.recommended, self.win11_tray, self.weather, self.search, self.taskview):
+            toggle.toggled.connect(lambda _on:self.layout_options.setChecked(True))
+        self.unit.currentIndexChanged.connect(lambda _index:self.layout_options.setChecked(True))
+        self.city.textEdited.connect(lambda _text:self.layout_options.setChecked(True))
         row = QHBoxLayout(); row.setContentsMargins(0, 14, 0, 0); row.setSpacing(8)
         row.addWidget(button('Aplicar aparência', self.apply_style))
         row.addWidget(button('Restaurar visual anterior', self.restore_style)); row.addStretch()
@@ -600,6 +622,11 @@ class Window(QMainWindow):
         args+=['--taskbar-align',self.taskbar_align.currentData(),'--taskbar-size',self.taskbar_size.currentData()]
         if not self.recommended.isChecked():args.append('--no-recommended')
         args+=['--tray','win11' if self.win11_tray.isChecked() else 'plasma']
+        if not self.weather.isChecked():args.append('--no-weather')
+        if self.city.text().strip():args+=['--weather-city',self.city.text().strip()]
+        if self.unit.currentData()=='f':args.append('--fahrenheit')
+        if not self.search.isChecked():args.append('--no-search')
+        if not self.taskview.isChecked():args.append('--no-taskview')
         if self.icons.currentData()=='keep':args.append('--no-icons')
         else:args+=['--icon-theme',self.icons.currentData()]
         if not self.layout_options.isChecked():args.append('--appearance-only')
@@ -639,7 +666,9 @@ class Window(QMainWindow):
                               style=self.style.currentData(),launcher=self.launcher.currentData(),
                               decoration=self.decoration.currentData(),menu_opacity=self.menu_opacity.currentData(),
                               taskbar_align=self.taskbar_align.currentData(),taskbar_size=self.taskbar_size.currentData(),
-                              recommended=self.recommended.isChecked(),tray='win11' if self.win11_tray.isChecked() else 'plasma')
+                              recommended=self.recommended.isChecked(),tray='win11' if self.win11_tray.isChecked() else 'plasma',
+                              weather=self.weather.isChecked(),weather_city=self.city.text().strip(),
+                              weather_unit=self.unit.currentData(),search=self.search.isChecked(),taskview=self.taskview.isChecked())
             self.save_prefs()
             self.layout_options.setChecked(False)
         else:

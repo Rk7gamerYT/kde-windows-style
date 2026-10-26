@@ -142,9 +142,18 @@ class QuickSettingsTests(unittest.TestCase):
     def test_quick_settings_widget_is_installed_with_runnable_status_script(self):
         with tempfile.TemporaryDirectory() as tmp:
             with patch.object(p,'DATA',Path(tmp)):
-                p.install_quicksettings()
+                p.install_widgets()
             target=Path(tmp)/'plasma/plasmoids'/p.QUICK_SETTINGS
             meta=json.loads((target/'metadata.json').read_text())
             self.assertEqual(meta['KPlugin']['Id'],p.QUICK_SETTINGS)
             self.assertTrue(os.access(target/'contents/code/status.sh',os.X_OK))
             self.assertIn(p.QUICK_SETTINGS,[path.name for path in p.OWNED])
+
+    def test_every_widget_package_has_its_id(self):
+        for name in p.WIDGETS:
+            meta=json.loads((p.ROOT/'assets'/name/'metadata.json').read_text())
+            self.assertEqual(meta['KPlugin']['Id'],'org.kdewindowsstyle.'+name)
+
+    def test_default_city_comes_from_time_zone(self):
+        with patch.object(p,'run',return_value='America/Sao_Paulo'):
+            self.assertEqual(p.default_city(),'Sao Paulo')
