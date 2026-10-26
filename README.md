@@ -27,11 +27,21 @@ Na sessão KDE, execute **sem sudo**:
 curl -fsSL https://raw.githubusercontent.com/Rk7gamerYT/kde-windows-style/main/windows11.sh | bash
 ```
 
-Esse único script instala o app no seu usuário e já aplica tudo: tema Win11OS escuro,
-ícones Win11, barra inferior de 48 px com Menu11 Next, botões das janelas à direita
-e os atalhos do Windows da tabela abaixo. Antes de qualquer mudança é criado um backup.
+Esse único script faz tudo sozinho, sem passos manuais:
+
+1. Instala as ferramentas do sistema que faltarem (pede sua senha uma vez, só se precisar),
+   no Ubuntu/Debian, Fedora, Arch ou openSUSE.
+2. Instala o app no seu usuário e prepara a interface gráfica.
+3. Prepara o DoorOS-Dolphin: já vem pronto no pacote completo; baixando do GitHub no
+   Ubuntu/Debian, é compilado uma única vez (10 a 20 minutos).
+4. Aplica o visual completo com backup: tema Win11OS escuro, ícones Win11, bordas das
+   janelas do Windows 11, menus translúcidos, barra com clima, Iniciar, Pesquisar, Visão de
+   tarefas, configurações rápidas, sino de notificações, apps em segundo plano na seta ^ e
+   os atalhos do Windows da tabela abaixo.
+
 Para escolher outras opções, passe-as depois de `bash -s --`, por exemplo
-`... | bash -s -- --theme light --opacity 94`. Dentro de uma pasta clonada, basta `./windows11.sh`.
+`... | bash -s -- --theme light --opacity 94`. `--no-dooros` pula o DoorOS-Dolphin e
+`--no-deps` não instala pacotes do sistema. Dentro de uma pasta clonada, basta `./windows11.sh`.
 
 Para desfazer:
 
