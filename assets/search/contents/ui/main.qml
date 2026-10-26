@@ -1,4 +1,5 @@
-// Windows 11 style search box on the taskbar. Clicking it, or typing after clicking, opens KRunner.
+// Windows 11 style search box on the taskbar. Like on Windows, it opens Start with the search field
+// focused (Menu11 Next), so typing right away searches apps, files and settings.
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -25,7 +26,7 @@ PlasmoidItem {
         Layout.fillHeight: true
         hoverEnabled: true
         cursorShape: Qt.IBeamCursor
-        onClicked: shell.connectSource("qdbus6 org.kde.krunner /App org.kde.krunner.App.display # " + Date.now())
+        onClicked: shell.connectSource("qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu # " + Date.now())
 
         Rectangle {
             id: pill

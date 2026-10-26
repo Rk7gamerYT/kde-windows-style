@@ -397,7 +397,7 @@ class Window(QMainWindow):
         layout.addWidget(card('Clima', 'Temperatura e previsão no canto esquerdo. Sem cidade, usa a do fuso horário.',
                               weather, 'weather-few-clouds'))
         self.search = Toggle(); self.search.setChecked(self.prefs.get('search', True))
-        layout.addWidget(card('Pesquisar', 'Caixa de pesquisa ao lado do Iniciar. Abre o KRunner para apps, arquivos e cálculos.',
+        layout.addWidget(card('Pesquisar', 'Caixa de pesquisa ao lado do Iniciar. Abre o menu Iniciar pronto para digitar, como no Windows 11.',
                               self.search, 'search'))
         self.taskview = Toggle(); self.taskview.setChecked(self.prefs.get('taskview', True))
         layout.addWidget(card('Visão de tarefas', 'Botão que mostra todas as janelas e áreas de trabalho, como Win + Tab.',
