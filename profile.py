@@ -364,14 +364,28 @@ def apply_panel(launcher='menu11'):
         menu.writeConfig("numberRows", 3);
     }
     var tasks = ensure("org.kde.plasma.icontasks");
+    // Windows 11 centers Start and the app icons, so the task list only takes the space it needs.
+    tasks.currentConfigGroup = ["General"]; tasks.writeConfig("fill", false);
+    panel.widgets().forEach(function(w) {
+        if (["org.kde.plasma.pager","org.kde.plasma.marginsseparator","org.kde.plasma.panelspacer"].indexOf(w.type)>=0) w.remove();
+    });
+    var left = panel.addWidget("org.kde.plasma.panelspacer");
+    var right = panel.addWidget("org.kde.plasma.panelspacer");
     var tray = ensure("org.kde.plasma.systemtray");
     var clock = ensure("org.kde.plasma.digitalclock");
+    // Small time over date, as on the Windows 11 taskbar, instead of a font scaled to the panel height.
     clock.currentConfigGroup = ["Appearance"]; clock.writeConfig("showDate", true);
+    clock.writeConfig("dateDisplayFormat", 2); clock.writeConfig("dateFormat", "shortDate");
+    clock.writeConfig("autoFontAndSize", false); clock.writeConfig("fontSize", 9);
+    clock.writeConfig("showSeconds", 0);
     var desktop = ensure("org.kde.plasma.showdesktop");
     var all = panel.widgets();
-    var middle = all.filter(w => [menu.id, tasks.id, tray.id, clock.id, desktop.id].indexOf(w.id) < 0);
+    var fixed = [left.id, menu.id, tasks.id, right.id, tray.id, clock.id, desktop.id];
+    var removed = ["org.kde.plasma.pager","org.kde.plasma.marginsseparator","org.kde.plasma.panelspacer",
+                   "menu.11.next","org.kde.plasma.kickoff","org.kde.plasma.kicker","org.kde.plasma.kickerdash"];
+    var middle = all.filter(w => fixed.indexOf(w.id) < 0 && removed.indexOf(w.type) < 0);
     panel.currentConfigGroup = ["General"];
-    var order = [menu.id, tasks.id].concat(middle.map(w => w.id)).concat([tray.id, clock.id, desktop.id]).join(";");
+    var order = [left.id, menu.id, tasks.id, right.id].concat(middle.map(w => w.id)).concat([tray.id, clock.id, desktop.id]).join(";");
     panel.writeConfig("AppletOrder", order);
     print(JSON.stringify({id:panel.id, order:order, opacity:panel.opacity, height:panel.height}));
     ''' % (json.dumps(menu_type),json.dumps(icon)))

@@ -74,7 +74,7 @@ redistribuídos como uma máquina virtual. O pacote usa os componentes do KDE in
 - Ícones Win11, Fluent ou manter os ícones atuais.
 - Menu11 Next ou o menu nativo Kickoff. O botão Iniciar usa o ícone azul do pacote Win11, sem desenho novo.
 - Opção para configurar também layout, menu Iniciar e atalhos.
-- Painel inferior de 48 px, menu à esquerda, tarefas com ícones, bandeja, relógio e mostrar desktop. A ordem é persistida com o Plasma parado, evitando que o novo botão Iniciar seja jogado para a direita durante a inicialização.
+- Painel inferior de 48 px como no Windows 11: botão Iniciar e ícones dos apps centralizados; bandeja, relógio compacto (hora sobre a data) e mostrar desktop à direita. A ordem é persistida com o Plasma parado, evitando que o novo botão Iniciar seja jogado para a direita durante a inicialização.
 - Duplo clique para abrir arquivos, com os botões das janelas à direita.
 
 Para ajustar só a aparência e a opacidade, deixe desmarcada **Configurar também o
