@@ -382,7 +382,7 @@ class Window(QMainWindow):
         layout.addWidget(card('Tamanho dos ícones', 'Pequeno deixa a barra com 40 px em vez de 48 px.', self.taskbar_size, 'zoom-fit-height'))
         self.win11_tray = Toggle(); self.win11_tray.setChecked(self.prefs.get('tray', 'win11')=='win11')
         layout.addWidget(card('Bandeja do Windows 11', 'Wi-Fi, som e bateria num só botão de configurações rápidas, sino de notificações '
-                              'ao lado do relógio e ícones extras atrás da seta.', self.win11_tray, 'preferences-system-notifications'))
+                              'ao lado do relógio e apps em segundo plano agrupados na seta ^, inclusive os que abrirem depois.', self.win11_tray, 'preferences-system-notifications'))
         layout.addWidget(label('Personalização', 'section'))
         layout.addWidget(card('Modo de cor', 'Tema claro ou escuro para o Plasma e os aplicativos.', self.theme, 'preferences-desktop-color'))
         self.style=QComboBox(); self.style.addItem('Win11OS · comunidade','win11'); self.style.addItem('Breeze · KDE','breeze')

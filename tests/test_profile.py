@@ -101,7 +101,7 @@ class ProfileTests(unittest.TestCase):
                  patch.object(p,'STATE',state),patch.object(p,'prerequisites'), \
                  patch.object(p,'backup',return_value=Path(tmp)/'backup'),patch.object(p,'install_menu'), \
                  patch.object(p,'install_theme'),patch.object(p,'write_config'),patch.object(p,'set_shortcuts'), \
-                 patch.object(p,'install_decoration'), \
+                 patch.object(p,'install_decoration'),patch.object(p,'tray_overflow'), \
                  patch.object(p,'apply_panel',return_value={'id':3,'order':'28;6;8;23;24'}), \
                  patch.object(p,'run',side_effect=record), \
                  patch.object(p,'stop_plasma',side_effect=lambda:calls.append(('stop',))), \

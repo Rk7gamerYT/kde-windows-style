@@ -41,6 +41,8 @@ DECORATION = 'KDEWindowsWin11'
 OWNED += [DATA/'aurorae/themes'/(DECORATION+suffix) for suffix in ['-dark', '-light']]
 QUICK_SETTINGS = 'org.kdewindowsstyle.quicksettings'
 OWNED += [DATA/'plasma/plasmoids'/QUICK_SETTINGS]
+TRAY_AUTOSTART = CONFIG/'autostart/kde-windows-style-tray.desktop'
+OWNED += [TRAY_AUTOSTART]
 META, ALT, CTRL, SHIFT = 0x10000000, 0x08000000, 0x04000000, 0x02000000
 TAB, F4, ESC = 0x01000001, 0x01000033, 0x01000000
 UP, DOWN, PGUP, PGDOWN, SCREENSAVER = 0x01000013, 0x01000015, 0x01000016, 0x01000017, 0x010000ba
@@ -367,6 +369,22 @@ def install_quicksettings():
     (target/'contents/code/status.sh').chmod(0o755)
 
 
+def tray_overflow(enabled):
+    """Start (or stop) keeping background app icons behind the tray arrow, now and at every login."""
+    if not enabled:
+        # The running watcher notices the missing entry and exits.
+        TRAY_AUTOSTART.unlink(missing_ok=True)
+        return
+    TRAY_AUTOSTART.parent.mkdir(parents=True, exist_ok=True)
+    TRAY_AUTOSTART.write_text('[Desktop Entry]\nType=Application\nName=KDE Windows Style: bandeja\n'
+                              f'Exec={desktop_exec(["python3", ROOT/"tray_overflow.py", "--watch"])}\n'
+                              'NoDisplay=true\nX-KDE-autostart-phase=2\n')
+    run('python3', ROOT/'tray_overflow.py', check=False)
+    if subprocess.run(['pgrep', '-f', 'tray_overflow.py --watch'], capture_output=True).returncode:
+        subprocess.Popen(['python3', str(ROOT/'tray_overflow.py'), '--watch'], start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 def install_start_icon():
     target=DATA/'kde-windows-style/start-menu-icon.svg'
     with tarfile.open(community_archive('win11-icons')) as tar:
@@ -465,6 +483,14 @@ def apply_panel(launcher='menu11', align='center', size='normal', recommended=Tr
     // The input language stays visible next to the clock, as on Windows.
     if (win11Tray && shown.indexOf("org.kde.plasma.keyboardlayout") < 0) shown.push("org.kde.plasma.keyboardlayout");
     tray.writeConfig("shownItems", shown.join(","));
+    // Like Windows 11, other KDE tray widgets wait behind the arrow too; the user can pin any of them back.
+    var overflow = ["org.kde.plasma.clipboard", "org.kde.kscreen", "org.kde.plasma.manage-inputmethod",
+                    "org.kde.plasma.devicenotifier", "org.kde.plasma.printmanager", "org.kde.plasma.mediacontroller",
+                    "org.kde.kdeconnect", "org.kde.plasma.vault", "org.kde.plasma.weather", "org.kde.kupapplet",
+                    "org.kde.plasma.keyboardindicator"];
+    var hidden = String(tray.readConfig("hiddenItems", "")).split(",").filter(x => x && (win11Tray || overflow.indexOf(x) < 0));
+    if (win11Tray) overflow.forEach(x => { if (hidden.indexOf(x) < 0 && shown.indexOf(x) < 0) hidden.push(x); });
+    tray.writeConfig("hiddenItems", hidden.join(","));
     panel.widgets().forEach(function(w) {
         if ((w.type === %s || w.type === "org.kde.plasma.notifications") && !win11Tray) w.remove();
     });
@@ -566,6 +592,7 @@ def main():
                 write_config('kdeglobals', 'KDE', 'SingleClick', 'false')
                 write_config('kwinrc', 'ModifierOnlyShortcuts', 'Meta', 'org.kde.plasmashell,/PlasmaShell,org.kde.PlasmaShell,activateLauncherMenu')
                 panel_state = apply_panel(args.launcher, args.taskbar_align, args.taskbar_size, not args.no_recommended, args.tray)
+                tray_overflow(args.tray == 'win11')
                 panel_id = panel_state['id']
                 panel_order = panel_state['order']
                 set_shortcuts()
