@@ -7,7 +7,17 @@ de **widgets por monitor**. Inclui o **DoorOS-Dolphin** pré-compilado.
 Testado no **Ubuntu/Kubuntu 26.04 x86_64, KDE Plasma 6 em Wayland**.
 O perfil começa com **88% de opacidade**, para uma transparência leve.
 
-![Interface do aplicativo](assets/interface.png)
+O app segue o visual das Configurações do Windows 11: navegação lateral, cartões
+arredondados, fundo no estilo Mica, prévia ao vivo da barra e tema claro ou escuro
+(acompanha o sistema, ou escolha em **Tema do app**).
+
+![Interface do aplicativo, tema escuro](assets/interface.png)
+
+<details><summary>Tema claro</summary>
+
+![Interface do aplicativo, tema claro](assets/interface-light.png)
+
+</details>
 
 ## Virar Windows 11 com um comando
 
@@ -133,11 +143,20 @@ O menu do KDE também recebe entradas para o app, restaurar o perfil e abrir as 
 A aba **DoorOS-Dolphin** permite registrar o aplicativo, abri-lo e, se você quiser,
 defini-lo como padrão para pastas e para Win+E. Há um botão para voltar ao gerenciador anterior.
 O binário é instalado dentro deste pacote, sem sobrescrever `/usr/bin/dolphin`.
+
+A janela imita o Explorador de Arquivos do Windows 11: abas na barra de título,
+botões de minimizar/maximizar/fechar desenhados no padrão Fluent (fechar fica vermelho),
+cantos de 8 px e pesquisa que mostra a pasta atual (“Pesquisar em Imagens”).
+
+![DoorOS-Dolphin](assets/dooros.png)
+
 As preferências de visualização do Dolphin podem ser compartilhadas com a versão do sistema.
 
 A versão inclusa é baseada no Dolphin **26.08.1**, commit
 `a5b4f9186ed146f1e7804fada86cde8277a0df97` do [DoorOS-Dolphin](https://github.com/Rk7gamerYT/DoorOS-Dolphin).
-Os fontes completos desse commit estão em `vendor/dooros-dolphin-source.tar.gz`.
+Os fontes completos desse commit estão em `vendor/dooros-dolphin-source.tar.gz`, e o
+acabamento Windows 11 da janela é aplicado na compilação a partir de
+`vendor/dooros-dolphin-windows11.patch`.
 
 Para compatibilidade com as bibliotecas do Ubuntu 26.04, a compilação desativa as
 integrações opcionais com Baloo/Baloo Widgets 26.08, telemetria e PackageKit.

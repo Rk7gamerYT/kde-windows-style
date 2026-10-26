@@ -15,6 +15,8 @@ STATE=Path(os.environ.get('XDG_STATE_HOME') or Path.home()/'.local/state')/'kde-
 SOURCE_REF='a5b4f9186ed146f1e7804fada86cde8277a0df97'
 SOURCE_SHA='833608dc001aab5a5a47cd9fa6c3a303436fb45ccc43bbcd850e2573106bbab1'
 DESKTOP='kde-windows-style-dooros.desktop'
+# Windows 11 Explorer look for the integrated window, applied on top of SOURCE_REF.
+PATCH=ROOT/'vendor/dooros-dolphin-windows11.patch'
 
 
 def binary():return ROOT/'vendor/dooros-dolphin/usr/bin/dolphin'
@@ -32,6 +34,10 @@ def build(install_deps=False):
     work=STATE/'build-dooros'
     source=work/'source'
     work.mkdir(parents=True,exist_ok=True)
+    patch=hashlib.sha256(PATCH.read_bytes()).hexdigest()
+    marker=source/'.kde-windows-style-patch'
+    if (source/'CMakeLists.txt').exists() and (not marker.is_file() or marker.read_text()!=patch):
+        shutil.rmtree(source)
     if not (source/'CMakeLists.txt').exists():
         source.mkdir(exist_ok=True)
         with tarfile.open(source_archive) as tar:
@@ -40,6 +46,8 @@ def build(install_deps=False):
         if len(roots)!=1:raise RuntimeError('Estrutura inesperada nos fontes DoorOS.')
         shutil.copytree(roots[0],source,dirs_exist_ok=True)
         shutil.rmtree(work/'extract')
+        subprocess.run(['patch','-p1','--forward','--batch','-d',str(source),'-i',str(PATCH)],check=True)
+        marker.write_text(patch)
     commands=[
         ['cmake','-S',str(source),'-B',str(work/'build'),'-G','Ninja',
          '-DCMAKE_BUILD_TYPE=Release','-DCMAKE_INSTALL_PREFIX=/usr','-DBUILD_TESTING=OFF',
@@ -69,7 +77,7 @@ def build(install_deps=False):
         if previous.exists():previous.rename(target)
         raise
     if previous.exists():shutil.rmtree(previous)
-    (target/'BUILD.json').write_text(json.dumps({'source':SOURCE_REF,'platform':'Ubuntu 26.04 x86_64','baloo_information_panel':False},indent=2))
+    (target/'BUILD.json').write_text(json.dumps({'source':SOURCE_REF,'patch':PATCH.name,'platform':'Ubuntu 26.04 x86_64','baloo_information_panel':False},indent=2))
     print('DoorOS-Dolphin compilado separadamente, sem substituir o Dolphin do sistema.',flush=True)
 
 
