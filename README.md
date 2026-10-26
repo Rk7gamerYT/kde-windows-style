@@ -110,7 +110,6 @@ As preferências de visualização do Dolphin podem ser compartilhadas com a ver
 A versão inclusa é baseada no Dolphin **26.08.1**, commit
 `a5b4f9186ed146f1e7804fada86cde8277a0df97` do [DoorOS-Dolphin](https://github.com/Rk7gamerYT/DoorOS-Dolphin).
 Os fontes completos desse commit estão em `vendor/dooros-dolphin-source.tar.gz`.
-Sua redistribuição pública neste pacote foi autorizada pelo proprietário do projeto.
 
 Para compatibilidade com as bibliotecas do Ubuntu 26.04, a compilação desativa as
 integrações opcionais com Baloo/Baloo Widgets 26.08, telemetria e PackageKit.
@@ -164,6 +163,14 @@ Somente a instalação das dependências de compilação pede autenticação.
 CMake/Ninja executam no usuário normal, com duas tarefas paralelas, e o resultado
 vai para `vendor/dooros-dolphin`. Nenhum binário do sistema é substituído.
 A receita de compilação está em `dooros.py`, e a lista de dependências em `build-deps.py`.
+
+Para reproduzir o pacote completo (com as dependências de compilação já instaladas):
+
+```bash
+./package.sh
+```
+
+O resultado e o checksum ficam em `dist/`. Os wheels são baixados apenas se ainda não estiverem presentes.
 
 Testes:
 

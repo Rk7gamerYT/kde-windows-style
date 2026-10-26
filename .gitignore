@@ -9,3 +9,5 @@ __pycache__/
 vendor/wheels/*.whl
 vendor/dooros-dolphin/
 dist/
+
+.packaging-venv/
