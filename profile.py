@@ -297,6 +297,14 @@ def install_menu11():
         if meta['KPlugin']['Id']!='menu.11.next':raise RuntimeError('Pacote Menu11 inesperado.')
         if target.exists():shutil.rmtree(target)
         shutil.copytree(temp,target)
+    # The bundled translations still use the old dittomenu domain; Plasma looks them up by plugin id.
+    for mo in target.glob('contents/locale/*/LC_MESSAGES/*.mo'):
+        mo.rename(mo.with_name('plasma_applet_menu.11.next.mo'))
+    # Fuller pt_BR translation of the menu, using Windows 11 wording (assets/menu11-locale/*.po).
+    for mo in (ROOT/'assets/menu11-locale').glob('*.mo'):
+        locale=target/'contents/locale'/mo.stem/'LC_MESSAGES'
+        locale.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(mo,locale/'plasma_applet_menu.11.next.mo')
     print('Menu11 Next 1.3 instalado, de Eisteed.')
 
 
@@ -360,8 +368,10 @@ def apply_panel(launcher='menu11'):
     menu.currentConfigGroup = ["General"];
     menu.writeConfig("icon", %s);
     if (menu.type === "menu.11.next") {
-        menu.writeConfig("displayPosition", 0); menu.writeConfig("showAtCenter", false);
-        menu.writeConfig("numberRows", 3);
+        // Windows 11 opens Start centered just above the taskbar: 6x3 pinned grid, recommended files below.
+        menu.writeConfig("displayPosition", 2); menu.writeConfig("showAtCenter", true);
+        menu.writeConfig("numberColumns", 6); menu.writeConfig("numberRows", 3);
+        menu.writeConfig("showRecentDocs", true); menu.writeConfig("viewUser", true);
     }
     var tasks = ensure("org.kde.plasma.icontasks");
     // Windows 11 centers Start and the app icons, so the task list only takes the space it needs.
