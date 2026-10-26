@@ -87,6 +87,7 @@ redistribuídos como uma máquina virtual. O pacote usa os componentes do KDE in
 - Painel inferior de 48 px como no Windows 11: botão Iniciar e ícones dos apps centralizados; bandeja, relógio compacto (hora sobre a data) e mostrar desktop à direita. A ordem é persistida com o Plasma parado, evitando que o novo botão Iniciar seja jogado para a direita durante a inicialização.
 - Barra alinhada ao centro (Windows 11) ou à esquerda (Windows 10), com ícones de tamanho padrão (48 px) ou pequeno (40 px). À esquerda, o menu Iniciar abre junto ao botão, como no Windows.
 - Seção Recomendados do menu Iniciar pode ser escondida.
+- Bandeja como a do Windows 11: um botão de configurações rápidas (Wi-Fi ou Ethernet, som e bateria) abre um painel com Wi-Fi, Bluetooth, modo avião, luz noturna, não incomodar e volume; o sino de notificações fica depois do relógio e os ícones extras ficam atrás da seta. O widget de configurações rápidas é deste projeto (`assets/quicksettings`). Clique com o botão direito num bloco para abrir as configurações dele.
 - Bordas das janelas Win11OS (Aurorae, da comunidade): cantos arredondados e botões largos minimizar, maximizar e fechar, nas versões clara e escura. Ou Breeze com borda fina.
 - Menus de contexto dos aplicativos translúcidos com desfoque, como os menus acrílicos do Windows 11 (acrílico, leve ou sólido). Vale para os apps abertos depois de aplicar.
 - Duplo clique para abrir arquivos, com os botões das janelas à direita.
@@ -197,7 +198,7 @@ a barra pode desaparecer por alguns segundos. Uma falha tenta restaurar o backup
 ./kde-windows-style.sh --dry-run
 ./kde-windows-style.sh --opacity 90 --style win11 --icon-theme win11 --launcher menu11 --theme dark
 ./kde-windows-style.sh --appearance-only --opacity 94 --no-icons --style breeze
-./kde-windows-style.sh --taskbar-align left --taskbar-size small --decoration win11 --menu-opacity 85 --no-recommended
+./kde-windows-style.sh --taskbar-align left --taskbar-size small --decoration win11 --menu-opacity 85 --no-recommended --tray win11
 ./launch.sh
 ```
 

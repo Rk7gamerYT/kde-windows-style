@@ -39,6 +39,8 @@ OWNED += [DATA/'color-schemes'/name for name in ['KDEWindowsWin11Dark.colors','K
 OWNED += [DATA/'plasma/plasmoids/menu.11.next',DATA/'kde-windows-style/start-menu-icon.svg']
 DECORATION = 'KDEWindowsWin11'
 OWNED += [DATA/'aurorae/themes'/(DECORATION+suffix) for suffix in ['-dark', '-light']]
+QUICK_SETTINGS = 'org.kdewindowsstyle.quicksettings'
+OWNED += [DATA/'plasma/plasmoids'/QUICK_SETTINGS]
 META, ALT, CTRL, SHIFT = 0x10000000, 0x08000000, 0x04000000, 0x02000000
 TAB, F4, ESC = 0x01000001, 0x01000033, 0x01000000
 UP, DOWN, PGUP, PGDOWN, SCREENSAVER = 0x01000013, 0x01000015, 0x01000016, 0x01000017, 0x010000ba
@@ -358,6 +360,13 @@ def install_menu11():
     print('Menu11 Next 1.3 instalado, de Eisteed.')
 
 
+def install_quicksettings():
+    target=DATA/'plasma/plasmoids'/QUICK_SETTINGS
+    if target.exists():shutil.rmtree(target)
+    shutil.copytree(ROOT/'assets/quicksettings', target)
+    (target/'contents/code/status.sh').chmod(0o755)
+
+
 def install_start_icon():
     target=DATA/'kde-windows-style/start-menu-icon.svg'
     with tarfile.open(community_archive('win11-icons')) as tar:
@@ -398,8 +407,9 @@ def install_menu():
         run('kbuildsycoca6', '--noincremental')
 
 
-def apply_panel(launcher='menu11', align='center', size='normal', recommended=True):
+def apply_panel(launcher='menu11', align='center', size='normal', recommended=True, tray='win11'):
     if launcher=='menu11':install_menu11()
+    if tray=='win11':install_quicksettings()
     icon=install_start_icon()
     menu_type='menu.11.next' if launcher=='menu11' else 'org.kde.plasma.kickoff'
     result = script('''
@@ -440,19 +450,40 @@ def apply_panel(launcher='menu11', align='center', size='normal', recommended=Tr
     clock.writeConfig("dateDisplayFormat", 2); clock.writeConfig("dateFormat", "shortDate");
     clock.writeConfig("autoFontAndSize", false); clock.writeConfig("fontSize", 9);
     clock.writeConfig("showSeconds", 0);
+    var win11Tray = %s;
+    // Windows 11 groups network, sound and battery in one quick settings button and puts the
+    // notification bell after the clock; Plasma's own tray icons for those are left out to avoid duplicates.
+    var grouped = ["org.kde.plasma.networkmanagement", "org.kde.plasma.volume", "org.kde.plasma.battery",
+                   "org.kde.plasma.bluetooth", "org.kde.plasma.notifications"];
+    tray.currentConfigGroup = ["General"];
+    var extra = String(tray.readConfig("extraItems", "")).split(",").filter(x => x);
+    var known = String(tray.readConfig("knownItems", "")).split(",").filter(x => x);
+    extra = extra.filter(x => !win11Tray || grouped.indexOf(x) < 0);
+    if (!win11Tray) grouped.forEach(x => { if (extra.indexOf(x) < 0 && known.indexOf(x) >= 0) extra.push(x); });
+    tray.writeConfig("extraItems", extra.join(","));
+    var shown = String(tray.readConfig("shownItems", "")).split(",").filter(x => x && grouped.indexOf(x) < 0);
+    // The input language stays visible next to the clock, as on Windows.
+    if (win11Tray && shown.indexOf("org.kde.plasma.keyboardlayout") < 0) shown.push("org.kde.plasma.keyboardlayout");
+    tray.writeConfig("shownItems", shown.join(","));
+    panel.widgets().forEach(function(w) {
+        if ((w.type === %s || w.type === "org.kde.plasma.notifications") && !win11Tray) w.remove();
+    });
+    var quick = win11Tray ? ensure(%s) : null;
+    var bell = win11Tray ? ensure("org.kde.plasma.notifications") : null;
     var desktop = ensure("org.kde.plasma.showdesktop");
     var all = panel.widgets();
     var start = (center ? [left.id] : []).concat([menu.id, tasks.id, right.id]);
-    var fixed = start.concat([tray.id, clock.id, desktop.id]);
+    var end = [tray.id].concat(quick ? [quick.id] : []).concat([clock.id]).concat(bell ? [bell.id] : []).concat([desktop.id]);
+    var fixed = start.concat(end);
     var removed = ["org.kde.plasma.pager","org.kde.plasma.marginsseparator","org.kde.plasma.panelspacer",
                    "menu.11.next","org.kde.plasma.kickoff","org.kde.plasma.kicker","org.kde.plasma.kickerdash"];
     var middle = all.filter(w => fixed.indexOf(w.id) < 0 && removed.indexOf(w.type) < 0);
     panel.currentConfigGroup = ["General"];
-    var order = start.concat(middle.map(w => w.id)).concat([tray.id, clock.id, desktop.id]).join(";");
+    var order = start.concat(middle.map(w => w.id)).concat(end).join(";");
     panel.writeConfig("AppletOrder", order);
     print(JSON.stringify({id:panel.id, order:order, opacity:panel.opacity, height:panel.height}));
     ''' % (40 if size=='small' else 48, json.dumps(align=='center'), json.dumps(menu_type), json.dumps(icon),
-           json.dumps(recommended)))
+           json.dumps(recommended), json.dumps(tray=='win11'), json.dumps(QUICK_SETTINGS), json.dumps(QUICK_SETTINGS)))
     print('Painel configurado:', result)
     return json.loads(result)
 
@@ -491,6 +522,8 @@ def main():
     parser.add_argument('--taskbar-align', choices=['center','left'], default='center')
     parser.add_argument('--taskbar-size', choices=['normal','small'], default='normal', help='48 px ou 40 px')
     parser.add_argument('--no-recommended', action='store_true', help='esconder a seção Recomendados do menu Iniciar')
+    parser.add_argument('--tray', choices=['win11','plasma'], default='win11',
+                        help='win11: configurações rápidas e sino de notificações como no Windows 11')
     args = parser.parse_args()
     if not 50 <= args.opacity <= 100:
         parser.error('--opacity deve ficar entre 50 e 100')
@@ -532,7 +565,7 @@ def main():
             if not args.appearance_only:
                 write_config('kdeglobals', 'KDE', 'SingleClick', 'false')
                 write_config('kwinrc', 'ModifierOnlyShortcuts', 'Meta', 'org.kde.plasmashell,/PlasmaShell,org.kde.PlasmaShell,activateLauncherMenu')
-                panel_state = apply_panel(args.launcher, args.taskbar_align, args.taskbar_size, not args.no_recommended)
+                panel_state = apply_panel(args.launcher, args.taskbar_align, args.taskbar_size, not args.no_recommended, args.tray)
                 panel_id = panel_state['id']
                 panel_order = panel_state['order']
                 set_shortcuts()

@@ -380,6 +380,9 @@ class Window(QMainWindow):
         layout.addWidget(card(self.opacity_label, '88% é uma transparência leve. 100% deixa o fundo sólido.', slider, 'preferences-desktop-effects'))
         layout.addWidget(card('Alinhamento', 'No centro, como no Windows 11, ou à esquerda, como no Windows 10.', self.taskbar_align, 'format-justify-center'))
         layout.addWidget(card('Tamanho dos ícones', 'Pequeno deixa a barra com 40 px em vez de 48 px.', self.taskbar_size, 'zoom-fit-height'))
+        self.win11_tray = Toggle(); self.win11_tray.setChecked(self.prefs.get('tray', 'win11')=='win11')
+        layout.addWidget(card('Bandeja do Windows 11', 'Wi-Fi, som e bateria num só botão de configurações rápidas, sino de notificações '
+                              'ao lado do relógio e ícones extras atrás da seta.', self.win11_tray, 'preferences-system-notifications'))
         layout.addWidget(label('Personalização', 'section'))
         layout.addWidget(card('Modo de cor', 'Tema claro ou escuro para o Plasma e os aplicativos.', self.theme, 'preferences-desktop-color'))
         self.style=QComboBox(); self.style.addItem('Win11OS · comunidade','win11'); self.style.addItem('Breeze · KDE','breeze')
@@ -406,7 +409,7 @@ class Window(QMainWindow):
         # These live in the taskbar layout, so changing them needs the layout step.
         for combo in (self.launcher, self.taskbar_align, self.taskbar_size):
             combo.currentIndexChanged.connect(lambda _index:self.layout_options.setChecked(True))
-        self.recommended.toggled.connect(lambda _on:self.layout_options.setChecked(True))
+        for toggle in (self.recommended, self.win11_tray):toggle.toggled.connect(lambda _on:self.layout_options.setChecked(True))
         row = QHBoxLayout(); row.setContentsMargins(0, 14, 0, 0); row.setSpacing(8)
         row.addWidget(button('Aplicar aparência', self.apply_style))
         row.addWidget(button('Restaurar visual anterior', self.restore_style)); row.addStretch()
@@ -596,6 +599,7 @@ class Window(QMainWindow):
         args+=['--decoration',self.decoration.currentData(),'--menu-opacity',str(self.menu_opacity.currentData())]
         args+=['--taskbar-align',self.taskbar_align.currentData(),'--taskbar-size',self.taskbar_size.currentData()]
         if not self.recommended.isChecked():args.append('--no-recommended')
+        args+=['--tray','win11' if self.win11_tray.isChecked() else 'plasma']
         if self.icons.currentData()=='keep':args.append('--no-icons')
         else:args+=['--icon-theme',self.icons.currentData()]
         if not self.layout_options.isChecked():args.append('--appearance-only')
@@ -635,7 +639,7 @@ class Window(QMainWindow):
                               style=self.style.currentData(),launcher=self.launcher.currentData(),
                               decoration=self.decoration.currentData(),menu_opacity=self.menu_opacity.currentData(),
                               taskbar_align=self.taskbar_align.currentData(),taskbar_size=self.taskbar_size.currentData(),
-                              recommended=self.recommended.isChecked())
+                              recommended=self.recommended.isChecked(),tray='win11' if self.win11_tray.isChecked() else 'plasma')
             self.save_prefs()
             self.layout_options.setChecked(False)
         else:

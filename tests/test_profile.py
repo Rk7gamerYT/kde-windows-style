@@ -1,6 +1,7 @@
 import gzip
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 import sys
@@ -135,3 +136,15 @@ class DecorationTests(unittest.TestCase):
                  patch.object(p,'start_plasma'),patch.object(p,'set_shortcuts'),patch.object(p,'run'),patch.object(p,'install_menu'):
                 p.restore(backup)
             self.assertTrue((config/'breezerc').exists())
+
+
+class QuickSettingsTests(unittest.TestCase):
+    def test_quick_settings_widget_is_installed_with_runnable_status_script(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(p,'DATA',Path(tmp)):
+                p.install_quicksettings()
+            target=Path(tmp)/'plasma/plasmoids'/p.QUICK_SETTINGS
+            meta=json.loads((target/'metadata.json').read_text())
+            self.assertEqual(meta['KPlugin']['Id'],p.QUICK_SETTINGS)
+            self.assertTrue(os.access(target/'contents/code/status.sh',os.X_OK))
+            self.assertIn(p.QUICK_SETTINGS,[path.name for path in p.OWNED])
