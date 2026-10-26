@@ -25,6 +25,25 @@ def binary():return ROOT/'vendor/dooros-dolphin/usr/bin/dolphin'
 def installed():return binary().is_file() and os.access(binary(),os.X_OK)
 
 
+def dolphinrc():return Path(os.environ.get('XDG_CONFIG_HOME') or Path.home()/'.config')/'dolphinrc'
+
+
+def mica_enabled():
+    """Mica (blurred, tinted title and command rows) is on unless [DoorOS] Mica=false in dolphinrc."""
+    section=''
+    try:
+        for line in dolphinrc().read_text().splitlines():
+            line=line.strip()
+            if line.startswith('['):section=line
+            elif section=='[DoorOS]' and line.startswith('Mica='):return line[5:].strip().lower()!='false'
+    except OSError:pass
+    return True
+
+
+def set_mica(enabled):
+    subprocess.run(['kwriteconfig6','--file',str(dolphinrc()),'--group','DoorOS','--key','Mica','true' if enabled else 'false'],check=True)
+
+
 def build(install_deps=False):
     if install_deps:
         subprocess.run(['pkexec','--disable-internal-agent','/usr/bin/python3','-I',str(ROOT/'build-deps.py')],check=True)

@@ -33,7 +33,7 @@ index ba08d7f..47774d1 100644
              else search->setText(Search::DolphinQuery(url, url).searchTerm());
          });
 diff --git a/src/dooroschrome.h b/src/dooroschrome.h
-index e18afd2..d78b43a 100644
+index e18afd2..6e72680 100644
 --- a/src/dooroschrome.h
 +++ b/src/dooroschrome.h
 @@ -9,6 +9,7 @@
@@ -44,7 +44,24 @@ index e18afd2..d78b43a 100644
  #include <QPainterPath>
  #include <QRegion>
  #include <QPainter>
-@@ -31,7 +32,7 @@ protected:
+@@ -19,29 +20,90 @@
+ #include <QToolButton>
+ #include <QWindow>
+ #include <functional>
++#include <KConfigGroup>
+ #include <KLocalizedString>
++#include <KSharedConfig>
++#include <KWindowEffects>
++#include <QLineEdit>
++#include <QToolBar>
+ 
+ class DoorOsRoundedEffect final : public QGraphicsEffect {
+ public:
+     explicit DoorOsRoundedEffect(QMainWindow *window) : QGraphicsEffect(window), m_window(window) {}
+ protected:
+     void draw(QPainter *painter) override {
+-        QPoint offset;
+-        const QPixmap content = sourcePixmap(Qt::LogicalCoordinates, &offset, QGraphicsEffect::NoPad);
          painter->save();
          if (!m_window->isMaximized() && !m_window->isFullScreen()) {
              QPainterPath outline;
@@ -53,7 +70,13 @@ index e18afd2..d78b43a 100644
              painter->setRenderHint(QPainter::Antialiasing);
              painter->setClipPath(outline);
          }
-@@ -42,6 +43,62 @@ private:
+-        painter->drawPixmap(offset, content);
++        // Draw the window directly rather than through a cached pixmap: partial repaints of the
++        // pixmap lose the translucent Mica rows and leave opaque patches behind toolbar buttons.
++        drawSource(painter);
+         painter->restore();
+     }
+ private:
      QMainWindow *m_window;
  };
  
@@ -116,12 +139,16 @@ index e18afd2..d78b43a 100644
  // Presentation-only tab proxy: Dolphin still owns pages, history and file jobs.
  class DoorOsChrome final : public QWidget {
  public:
-@@ -50,34 +107,35 @@ public:
+@@ -50,34 +112,39 @@ public:
          : QWidget(window), m_window(window), m_native(nativeTabs), m_closeTab(std::move(closeTab))
      {
          setObjectName(QStringLiteral("doorosHeader"));
 -        setFixedHeight(42);
 -        setAutoFillBackground(true);
++        // Mica: KWin blurs what is behind the window and the title, tab and command rows let it show
++        // through a tint, while the folder view and side panel stay solid like in File Explorer.
++        m_mica = KConfigGroup(KSharedConfig::openConfig(), "DoorOS").readEntry("Mica", true)
++            && KWindowEffects::isEffectAvailable(KWindowEffects::BlurBehind);
 +        setFixedHeight(40);
 +        setAutoFillBackground(false);
          m_window->setGraphicsEffect(new DoorOsRoundedEffect(m_window));
@@ -165,14 +192,26 @@ index e18afd2..d78b43a 100644
          connect(m_tabs, &QTabBar::currentChanged, this, [this](int index) {
              if (index >= 0) m_native->setCurrentIndex(index);
          });
-@@ -102,6 +160,15 @@ public:
+@@ -102,6 +169,27 @@ public:
      }
      ~DoorOsChrome() override { qApp->removeEventFilter(this); }
  protected:
 +    // The tab strip sits on a darker Mica-like band; the selected tab merges into the toolbar below.
 +    void paintEvent(QPaintEvent *) override {
 +        QPainter p(this);
-+        p.fillRect(rect(), stripColor());
++        if (!m_mica) { p.fillRect(rect(), stripColor()); return; }
++        // Darken the tab strip over the Mica tint, leaving a hole for the selected tab so it
++        // reads as one surface with the command bar below.
++        p.setRenderHint(QPainter::Antialiasing);
++        QPainterPath strip;
++        strip.addRect(QRectF(rect()));
++        const QRect tab = selectedTabRect();
++        if (tab.isValid()) {
++            QPainterPath selected;
++            selected.addRoundedRect(QRectF(tab).adjusted(0, 0, 0, 8), 8, 8);
++            strip = strip.subtracted(selected.intersected(strip));
++        }
++        p.fillPath(strip, isDark() ? QColor(0, 0, 0, 70) : QColor(0, 0, 0, 12));
 +    }
 +    void changeEvent(QEvent *event) override {
 +        if (event->type() == QEvent::PaletteChange && !m_styling) applyTheme();
@@ -181,7 +220,21 @@ index e18afd2..d78b43a 100644
      void mousePressEvent(QMouseEvent *event) override {
          if (event->button() == Qt::LeftButton && m_window->windowHandle()) {
              m_window->windowHandle()->startSystemMove();
-@@ -137,7 +204,7 @@ protected:
+@@ -123,8 +211,12 @@ protected:
+     bool eventFilter(QObject *watched, QEvent *event) override {
+         if (watched == m_window && event->type() == QEvent::Paint) {
+             QPainter background(m_window);
+-            background.fillRect(m_window->rect(), m_window->palette().brush(QPalette::Window));
++            background.setCompositionMode(QPainter::CompositionMode_Source);
++            const int top = m_mica ? micaHeight() : 0;
++            if (top > 0) background.fillRect(QRect(0, 0, m_window->width(), top), micaTint());
++            background.fillRect(QRect(0, top, m_window->width(), m_window->height()-top), m_window->palette().brush(QPalette::Window));
+         }
++        if (watched == m_window && event->type() == QEvent::Show) QTimer::singleShot(0, this, [this] { clearToolbarFills(); updateBlur(); });
+         if (watched == m_tabs && event->type() == QEvent::MouseButtonRelease) {
+             auto *mouse = static_cast<QMouseEvent *>(event);
+             if (mouse->button() == Qt::MiddleButton) {
+@@ -137,7 +229,7 @@ protected:
              if (m_window->isMaximized() || m_window->isFullScreen()) m_window->clearMask();
              else {
                  QPainterPath outline;
@@ -190,7 +243,7 @@ index e18afd2..d78b43a 100644
                  m_window->setMask(QRegion(outline.toFillPolygon().toPolygon()));
              }
          }
-@@ -172,18 +239,33 @@ protected:
+@@ -172,21 +264,87 @@ protected:
          return false;
      }
  private:
@@ -206,7 +259,7 @@ index e18afd2..d78b43a 100644
 +    }
 +    void applyTheme() {
 +        m_styling = true;
-+        const QColor selected = m_window->palette().color(QPalette::Window);
++        const QColor selected = m_mica ? QColor(Qt::transparent) : m_window->palette().color(QPalette::Window);
 +        const QColor text = m_window->palette().color(QPalette::WindowText);
 +        const QString hover = isDark() ? QStringLiteral("rgba(255, 255, 255, 18)") : QStringLiteral("rgba(0, 0, 0, 13)");
 +        m_tabs->setStyleSheet(QStringLiteral(
@@ -216,9 +269,58 @@ index e18afd2..d78b43a 100644
 +            "QTabBar::tab:selected { background: %2; }"
 +            "QTabBar::tab:hover:!selected { background: %3; }"
 +            "QTabBar::close-button { subcontrol-position: right; margin: 0 2px; }")
-+            .arg(text.name(), selected.name(), hover));
++            .arg(text.name(), selected.name(QColor::HexArgb), hover));
 +        m_styling = false;
 +        update();
++    }
++    QRect selectedTabRect() const {
++        const int index = m_tabs->currentIndex();
++        return index < 0 ? QRect() : m_tabs->tabRect(index).translated(m_tabs->pos());
++    }
++    // Bottom edge of the rows drawn on Mica: this header and the toolbars stacked under it.
++    int micaHeight() const {
++        int bottom = 0;
++        for (QToolBar *bar : m_window->findChildren<QToolBar *>(Qt::FindDirectChildrenOnly))
++            if (bar->isVisible() && m_window->toolBarArea(bar) == Qt::TopToolBarArea) bottom = qMax(bottom, bar->geometry().bottom()+1);
++        return bottom;
++    }
++    QColor micaTint() const {
++        QColor tint = m_window->palette().color(QPalette::Window);
++        tint.setAlpha(isDark() ? 220 : 225);
++        return tint;
++    }
++    // Some toolbar widgets fill their own opaque background, which would cut holes in the Mica rows.
++    void clearToolbarFills() {
++        if (!m_mica) return;
++        for (QToolBar *bar : m_window->findChildren<QToolBar *>(Qt::FindDirectChildrenOnly)) {
++            if (m_window->toolBarArea(bar) != Qt::TopToolBarArea) continue;
++            // The window already painted the tint here, so the toolbar and its widgets (including ones
++            // KXMLGUI plugs in later) must not paint Window again. Popups are windows and keep theirs.
++            // Toolbars and their buttons paint the Button role; some buttons carry their own palette.
++            QList<QWidget *> widgets = bar->findChildren<QWidget *>();
++            widgets.prepend(bar);
++            for (QWidget *widget : widgets) {
++                if (widget->isWindow() || qobject_cast<QLineEdit *>(widget)) continue;
++                widget->setAutoFillBackground(false);
++                if (widget->palette().color(QPalette::Button).alpha() == 0 && widget->palette().color(QPalette::Window).alpha() == 0) continue;
++                QPalette clear = widget->palette();
++                clear.setColor(QPalette::Window, Qt::transparent);
++                clear.setColor(QPalette::Button, Qt::transparent);
++                widget->setPalette(clear);
++            }
++        }
++    }
++    void updateBlur() {
++        if (!m_mica || !m_window->windowHandle()) return;
++        QRegion region(m_window->rect());
++        if (!m_window->isMaximized() && !m_window->isFullScreen()) {
++            QPainterPath outline;
++            outline.addRoundedRect(QRectF(m_window->rect()), 8, 8);
++            region = QRegion(outline.toFillPolygon().toPolygon());
++        }
++        if (region == m_blurRegion) return;
++        m_blurRegion = region;
++        KWindowEffects::enableBlurBehind(m_window->windowHandle(), true, region);
      }
      void toggleMaximized() { if (m_window->isMaximized()) m_window->showNormal(); else m_window->showMaximized(); }
      void synchronize() {
@@ -230,10 +332,25 @@ index e18afd2..d78b43a 100644
              const QRegion rounded(outline.toFillPolygon().toPolygon());
              if (m_window->mask() != rounded) m_window->setMask(rounded);
          }
-@@ -204,5 +286,6 @@ private:
++        updateBlur();
++        clearToolbarFills();
+         QSignalBlocker guard(m_tabs);
+         while (m_tabs->count() > m_native->count()) m_tabs->removeTab(m_tabs->count()-1);
+         while (m_tabs->count() < m_native->count()) m_tabs->addTab(QString());
+@@ -198,11 +356,16 @@ private:
+         m_tabs->setCurrentIndex(m_native->currentIndex());
+         m_tabs->setMaximumWidth(qMax(180, m_window->width()-240));
+         m_native->hide();
++        if (m_mica && selectedTabRect() != m_paintedTab) { m_paintedTab = selectedTabRect(); update(); }
+     }
+     QMainWindow *m_window;
+     QTabBar *m_native;
      QTabBar *m_tabs;
      QPointer<QWidget> m_cursorOwner;
      QCursor m_savedCursor;
 +    bool m_styling = false;
++    bool m_mica = false;
++    QRegion m_blurRegion;
++    QRect m_paintedTab;
      std::function<void(int)> m_closeTab;
  };
