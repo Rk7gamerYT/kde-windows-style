@@ -28,7 +28,8 @@ class GuiTests(unittest.TestCase):
             {'id':33,'kind':'panel','screen':0,'rect':[0,0,1920,1080],'widgets':[]},
         ]}
         for patcher in [patch.object(gui,'CONFIG',root/'gui.json'),patch.object(gui,'STATE',root),
-                        patch.object(gui.plasma,'describe',return_value=self.data),patch.object(gui.dooros,'installed',return_value=True)]:
+                        patch.object(gui.plasma,'describe',return_value=self.data),patch.object(gui.dooros,'installed',return_value=True),
+                        patch.object(gui.dooros,'mica_enabled',return_value=True)]:
             patcher.start();self.addCleanup(patcher.stop)
         self.window=gui.Window();self.addCleanup(self.window.close)
 
@@ -69,3 +70,8 @@ class GuiTests(unittest.TestCase):
         self.assertIsNone(self.window.container())
         with patch.object(gui.plasma,'add') as add:self.window.add_widget()
         add.assert_not_called()
+
+    def test_dooros_mica_toggle_writes_setting(self):
+        self.assertTrue(self.window.dooros_mica.isChecked())
+        with patch.object(gui.dooros,'set_mica') as set_mica:self.window.dooros_mica.setChecked(False)
+        set_mica.assert_called_once_with(False)

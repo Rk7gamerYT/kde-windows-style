@@ -487,6 +487,11 @@ class Window(QMainWindow):
         row.addLayout(text, 1)
         row.addWidget(button('Abrir',lambda:QProcess.startDetached(str(ROOT/'dooros-launch.sh'),[])))
         layout.addWidget(hero)
+        layout.addWidget(label('Aparência', 'section'))
+        self.dooros_mica = Toggle(); self.dooros_mica.setChecked(dooros.mica_enabled())
+        self.dooros_mica.toggled.connect(self.set_dooros_mica)
+        layout.addWidget(card('Efeito Mica', 'Abas e barras deixam o papel de parede aparecer, desfocado e tingido, como no Explorador. '
+                              'Vale para as próximas janelas abertas.', self.dooros_mica, 'preferences-desktop-effects'))
         layout.addWidget(label('Configuração', 'section'))
         layout.addWidget(card('Preparar e registrar', 'Adiciona o DoorOS-Dolphin ao menu de aplicativos.',
                               button('Preparar',lambda:self.start_process(['--install'],ROOT/'dooros.py')), 'run-build'))
@@ -497,6 +502,13 @@ class Window(QMainWindow):
         layout.addWidget(label('A compilação para Ubuntu 26.04 não inclui a integração opcional com Baloo 26.08. '
                                'O painel de informações e alguns recursos de indexação podem não estar disponíveis.', 'caption'))
         layout.addStretch();return page
+
+    def set_dooros_mica(self, enabled):
+        try:
+            dooros.set_mica(enabled)
+            self.set_status('Mica ligado no DoorOS-Dolphin. Abra uma nova janela para ver.' if enabled else
+                            'Mica desligado no DoorOS-Dolphin. Abra uma nova janela para ver.', 'ok')
+        except (OSError, dooros.subprocess.SubprocessError) as exc:self.error(exc)
 
     def widgets_page(self):
         page, layout = self.page('Widgets por monitor', 'Escolha uma tela e uma área para ver, configurar, mover ou remover widgets.')
