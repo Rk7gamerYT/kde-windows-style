@@ -1,0 +1,412 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: dittomenu\n"
+"Report-Msgid-Bugs-To: https://store.kde.org/p/1312669/\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "@item:inmenu Open icon chooser dialog"
+msgid "Choose..."
+msgstr "Procurar"
+
+msgctxt "@item:inmenu Reset icon to default"
+msgid "Clear Icon"
+msgstr "Resetar Ícone"
+
+msgid "A configurable launcher menu"
+msgstr "Configuração do Menu Iniciar"
+
+msgid "Add to Favorites"
+msgstr "Adicionar aos Favoritos"
+
+msgid "All apps"
+msgstr "Todos os programas"
+
+msgid "Center"
+msgstr "Centro"
+
+msgid "Center bottom"
+msgstr "Centro inferior"
+
+msgid "Default"
+msgstr "Padrão"
+
+msgid "Ditto Menu"
+msgstr "Ditto Menu"
+
+msgid "Edit Applications..."
+msgstr "Editar Programa"
+
+msgid "Favorites"
+msgstr "Favoritos"
+
+msgid "General"
+msgstr "Geral"
+
+msgid "Hi, "
+msgstr "Olá, "
+
+msgid "Icon:"
+msgstr "Ícone"
+
+msgid "Leave ..."
+msgstr "Sair ..."
+
+msgid "Lock Screen"
+msgstr "Tela de bloqueio"
+
+msgid "Menu position"
+msgstr "Posição do menu"
+
+msgid "Number of columns"
+msgstr "Numero de colunas"
+
+msgid "Number of rows"
+msgstr "Numero de filas"
+
+msgid "On All Activities"
+msgstr "Em todas as atividades"
+
+msgid "On The Current Activity"
+msgstr "Na atividade atual"
+
+msgid "Remove from Favorites"
+msgstr "Remover dos favoritos"
+
+msgid "Show In Favorites"
+msgstr "Exibir nos favoritos"
+
+msgid "Show favorites first"
+msgstr "Exbir os Favoritros primeiro"
+
+msgid "Show labels in two lines"
+msgstr "Exibir os nomes em duas linhas"
+
+msgid "System Preferences"
+msgstr "Configurações do Sistema"
+
+msgid "Type here to search ..."
+msgstr "Digite aqui para pesquisar"
+
+msgid "Unhidden!"
+msgstr "Reexibido"
+
+msgid "Unhide all hidden applications"
+msgstr "Mostrar aplicativos ocultos"
+
+msgid "User Home"
+msgstr "Diretório do Usuário"
+
+msgid "%1 afternoon picks"
+msgstr "Sugestões da tarde de %1"
+
+msgid "%1 app"
+msgstr "%1 app"
+
+msgid "%1 evening picks"
+msgstr "Sugestões da noite de %1"
+
+msgid "%1 morning picks"
+msgstr "Sugestões da manhã de %1"
+
+msgid "%1 night session"
+msgstr "Sessão noturna de %1"
+
+msgid "Actions"
+msgstr "Ações"
+
+msgid "Add apps — %1"
+msgstr "Adicionar apps — %1"
+
+msgid "Add apps to folder"
+msgstr "Adicionar apps à pasta"
+
+msgid "Afternoon session"
+msgstr "Sessão da tarde"
+
+msgid "All"
+msgstr "Tudo"
+
+msgid "All Apps"
+msgstr "Todos os apps"
+
+msgid "Alt+1–9 to launch"
+msgstr "Alt+1–9 para abrir"
+
+msgid "Apps"
+msgstr "Apps"
+
+msgid "Apps icon size:"
+msgstr "Tamanho dos ícones de apps:"
+
+msgid "By type"
+msgstr "Por tipo"
+
+msgid "Calculator"
+msgstr "Calculadora"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Category"
+msgstr "Categoria"
+
+msgid "Choose apps from Pinned:"
+msgstr "Escolha apps dos fixados:"
+
+msgid "Create"
+msgstr "Criar"
+
+msgid "Default sort order:"
+msgstr "Ordem padrão:"
+
+msgid "Default view mode:"
+msgstr "Modo de exibição padrão:"
+
+msgid "Delete folder"
+msgstr "Excluir pasta"
+
+msgid "Docs icon size:"
+msgstr "Tamanho dos ícones de documentos:"
+
+msgid "Drag apps from the list onto this folder to add them."
+msgstr "Arraste apps da lista para esta pasta para adicioná-los."
+
+msgid "Drag apps here to add them"
+msgstr "Arraste apps para cá"
+
+msgid "Edit Applications…"
+msgstr "Editar aplicativos…"
+
+msgid "Enter or click to copy result"
+msgstr "Enter ou clique para copiar o resultado"
+
+msgid "Evening apps"
+msgstr "Apps da noite"
+
+msgid "Files"
+msgstr "Arquivos"
+
+msgid "Filter…"
+msgstr "Filtrar…"
+
+msgid "Folder name"
+msgstr "Nome da pasta"
+
+msgid "Footer power buttons"
+msgstr "Botões de energia no rodapé"
+
+msgid "Frequently used"
+msgstr "Mais usados"
+
+msgid "Friday"
+msgstr "Sexta-feira"
+
+msgid "Good afternoon"
+msgstr "Boa tarde"
+
+msgid "Good evening"
+msgstr "Boa noite"
+
+msgid "Good morning"
+msgstr "Bom dia"
+
+msgid "Good morning apps"
+msgstr "Apps da manhã"
+
+msgid "Grid"
+msgstr "Grade"
+
+msgid "Home page:"
+msgstr "Página inicial:"
+
+msgid "Huge"
+msgstr "Enorme"
+
+msgid "Large"
+msgstr "Grande"
+
+msgid "Late night"
+msgstr "Madrugada"
+
+msgid "List"
+msgstr "Lista"
+
+msgid "Lock the screen"
+msgstr "Bloquear a tela"
+
+msgid "Log out"
+msgstr "Sair"
+
+msgid "Logout"
+msgstr "Sair"
+
+msgid "Medium"
+msgstr "Médio"
+
+msgid "Midday picks"
+msgstr "Sugestões do meio-dia"
+
+msgid "Monday"
+msgstr "Segunda-feira"
+
+msgid "Newest"
+msgstr "Mais recentes"
+
+msgid "New folder"
+msgstr "Nova pasta"
+
+msgid "New Folder"
+msgstr "Nova pasta"
+
+msgid "Oldest"
+msgstr "Mais antigos"
+
+msgid "On the Current Activity"
+msgstr "Na atividade atual"
+
+msgid "Open a terminal"
+msgstr "Abrir um terminal"
+
+msgid "Open file manager"
+msgstr "Abrir gerenciador de arquivos"
+
+msgid "Open Files"
+msgstr "Abrir arquivos"
+
+msgid "Opens default browser"
+msgstr "Abre o navegador padrão"
+
+msgid "Open System Settings"
+msgstr "Abrir Configurações do sistema"
+
+msgid "Open Terminal"
+msgstr "Abrir terminal"
+
+msgid "Pinned"
+msgstr "Fixados"
+
+msgid "Pin to Start"
+msgstr "Fixar no Iniciar"
+
+msgid "Press Enter to run: %1"
+msgstr "Pressione Enter para executar: %1"
+
+msgid "Recent documents"
+msgstr "Recomendados"
+
+msgid "Recent Documents:"
+msgstr "Documentos recentes:"
+
+msgid "Rename"
+msgstr "Renomear"
+
+msgid "Rename folder"
+msgstr "Renomear pasta"
+
+msgid "Rename Folder"
+msgstr "Renomear pasta"
+
+msgid "Restart"
+msgstr "Reiniciar"
+
+msgid "Restart the computer"
+msgstr "Reiniciar o computador"
+
+msgid "Saturday"
+msgstr "Sábado"
+
+msgid "Save"
+msgstr "Salvar"
+
+msgid "Screenshot"
+msgstr "Captura de tela"
+
+msgid "Search"
+msgstr "Pesquisar"
+
+msgid "Search  ·  > shell  ·  / commands"
+msgstr "Pesquisar  ·  > shell  ·  / comandos"
+
+msgid "Settings"
+msgstr "Configurações"
+
+msgid "Show:"
+msgstr "Mostrar:"
+
+msgid "Show in Favorites"
+msgstr "Mostrar nos favoritos"
+
+msgid "Show more"
+msgstr "Mais"
+
+msgid "Show Quick Actions bar (Screenshot, Lock, Terminal…)"
+msgstr "Mostrar barra de ações rápidas (captura, bloqueio, terminal…)"
+
+msgid "Show Recent Documents section"
+msgstr "Mostrar seção de documentos recentes"
+
+msgid "Show recently opened apps"
+msgstr "Mostrar apps abertos recentemente"
+
+msgid "Shutdown"
+msgstr "Desligar"
+
+msgid "Shut down the computer"
+msgstr "Desligar o computador"
+
+msgid "Sleep"
+msgstr "Suspender"
+
+msgid "Sleep / Suspend"
+msgstr "Suspender"
+
+msgid "Small"
+msgstr "Pequeno"
+
+msgid "Sunday"
+msgstr "Domingo"
+
+msgid "Suspend to RAM"
+msgstr "Suspender para a RAM"
+
+msgid "System Settings"
+msgstr "Configurações do sistema"
+
+msgid "Take a screenshot"
+msgstr "Capturar a tela"
+
+msgid "Thursday"
+msgstr "Quinta-feira"
+
+msgid "Tuesday"
+msgstr "Terça-feira"
+
+msgid "Type a command  ·  ↓ navigate  ·  /calc expr  ·  Enter run"
+msgstr "Digite um comando  ·  ↓ navegar  ·  /calc expr  ·  Enter executar"
+
+msgid "Type a shell command after '>'"
+msgstr "Digite um comando do shell após '>'"
+
+msgid "Unpin all apps in folder"
+msgstr "Desafixar todos os apps da pasta"
+
+msgid "Unpin from Start"
+msgstr "Desafixar do Iniciar"
+
+msgid "Wednesday"
+msgstr "Quarta-feira"
+
+msgid "Your morning session"
+msgstr "Sua sessão da manhã"
+
+msgid "Your top picks"
+msgstr "Suas principais sugestões"
+
+msgid "Enable shell command runner ( > cmd )"
+msgstr "Ativar execução de comandos ( > cmd )"

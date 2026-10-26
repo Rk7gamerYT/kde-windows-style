@@ -7,9 +7,39 @@ de **widgets por monitor**. Inclui o **DoorOS-Dolphin** pré-compilado.
 Testado no **Ubuntu/Kubuntu 26.04 x86_64, KDE Plasma 6 em Wayland**.
 O perfil começa com **88% de opacidade**, para uma transparência leve.
 
-![Interface do aplicativo](assets/interface.png)
+O app segue o visual das Configurações do Windows 11: navegação lateral, cartões
+arredondados, fundo no estilo Mica, prévia ao vivo da barra e tema claro ou escuro
+(acompanha o sistema, ou escolha em **Tema do app**).
 
-## Instalar com um comando
+![Interface do aplicativo, tema escuro](assets/interface.png)
+
+<details><summary>Tema claro</summary>
+
+![Interface do aplicativo, tema claro](assets/interface-light.png)
+
+</details>
+
+## Virar Windows 11 com um comando
+
+Na sessão KDE, execute **sem sudo**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Rk7gamerYT/kde-windows-style/main/windows11.sh | bash
+```
+
+Esse único script instala o app no seu usuário e já aplica tudo: tema Win11OS escuro,
+ícones Win11, barra inferior de 48 px com Menu11 Next, botões das janelas à direita
+e os atalhos do Windows da tabela abaixo. Antes de qualquer mudança é criado um backup.
+Para escolher outras opções, passe-as depois de `bash -s --`, por exemplo
+`... | bash -s -- --theme light --opacity 94`. Dentro de uma pasta clonada, basta `./windows11.sh`.
+
+Para desfazer:
+
+```bash
+~/.local/share/kde-windows-style/app/kde-windows-style.sh --restore
+```
+
+## Instalar só o app com interface
 
 Na sessão KDE, execute **sem sudo**:
 
@@ -52,9 +82,13 @@ redistribuídos como uma máquina virtual. O pacote usa os componentes do KDE in
 - Tema claro ou escuro.
 - Estilo Win11OS da comunidade ou Breeze do KDE.
 - Ícones Win11, Fluent ou manter os ícones atuais.
-- Menu11 Next ou o menu nativo Kickoff. O botão Iniciar usa o ícone azul do pacote Win11, sem desenho novo.
+- Menu11 Next (centralizado acima da barra como no Windows 11, com Fixados e Recomendados em português) ou o menu nativo Kickoff. O botão Iniciar usa o ícone azul do pacote Win11, sem desenho novo.
 - Opção para configurar também layout, menu Iniciar e atalhos.
-- Painel inferior de 48 px, menu à esquerda, tarefas com ícones, bandeja, relógio e mostrar desktop. A ordem é persistida com o Plasma parado, evitando que o novo botão Iniciar seja jogado para a direita durante a inicialização.
+- Painel inferior de 48 px como no Windows 11: botão Iniciar e ícones dos apps centralizados; bandeja, relógio compacto (hora sobre a data) e mostrar desktop à direita. A ordem é persistida com o Plasma parado, evitando que o novo botão Iniciar seja jogado para a direita durante a inicialização.
+- Barra alinhada ao centro (Windows 11) ou à esquerda (Windows 10), com ícones de tamanho padrão (48 px) ou pequeno (40 px). À esquerda, o menu Iniciar abre junto ao botão, como no Windows.
+- Seção Recomendados do menu Iniciar pode ser escondida.
+- Bordas das janelas Win11OS (Aurorae, da comunidade): cantos arredondados e botões largos minimizar, maximizar e fechar, nas versões clara e escura. Ou Breeze com borda fina.
+- Menus de contexto dos aplicativos translúcidos com desfoque, como os menus acrílicos do Windows 11 (acrílico, leve ou sólido). Vale para os apps abertos depois de aplicar.
 - Duplo clique para abrir arquivos, com os botões das janelas à direita.
 
 Para ajustar só a aparência e a opacidade, deixe desmarcada **Configurar também o
@@ -92,6 +126,11 @@ Ao aplicar também o layout e os atalhos:
 | Win+R | Executar/pesquisar com KRunner |
 | Win+I | Configurações do KDE |
 | Win+D | Mostrar área de trabalho |
+| Win+L | Bloquear a sessão |
+| Win+↑ / Win+↓ | Maximizar / minimizar janela |
+| Win+← / Win+→ | Encaixar janela à esquerda / direita |
+| Win+V | Histórico da área de transferência |
+| Ctrl+Shift+Esc | Monitor do sistema (Gerenciador de Tarefas) |
 | Win+Tab | Visão geral |
 | Alt+Tab | Alternar entre janelas |
 | Alt+F4 | Fechar janela |
@@ -108,11 +147,20 @@ O menu do KDE também recebe entradas para o app, restaurar o perfil e abrir as 
 A aba **DoorOS-Dolphin** permite registrar o aplicativo, abri-lo e, se você quiser,
 defini-lo como padrão para pastas e para Win+E. Há um botão para voltar ao gerenciador anterior.
 O binário é instalado dentro deste pacote, sem sobrescrever `/usr/bin/dolphin`.
+
+A janela imita o Explorador de Arquivos do Windows 11: abas na barra de título,
+botões de minimizar/maximizar/fechar desenhados no padrão Fluent (fechar fica vermelho),
+cantos de 8 px e pesquisa que mostra a pasta atual (“Pesquisar em Imagens”).
+
+![DoorOS-Dolphin](assets/dooros.png)
+
 As preferências de visualização do Dolphin podem ser compartilhadas com a versão do sistema.
 
 A versão inclusa é baseada no Dolphin **26.08.1**, commit
 `a5b4f9186ed146f1e7804fada86cde8277a0df97` do [DoorOS-Dolphin](https://github.com/Rk7gamerYT/DoorOS-Dolphin).
-Os fontes completos desse commit estão em `vendor/dooros-dolphin-source.tar.gz`.
+Os fontes completos desse commit estão em `vendor/dooros-dolphin-source.tar.gz`, e o
+acabamento Windows 11 da janela é aplicado na compilação a partir de
+`vendor/dooros-dolphin-windows11.patch`.
 
 Para compatibilidade com as bibliotecas do Ubuntu 26.04, a compilação desativa as
 integrações opcionais com Baloo/Baloo Widgets 26.08, telemetria e PackageKit.
@@ -149,6 +197,7 @@ a barra pode desaparecer por alguns segundos. Uma falha tenta restaurar o backup
 ./kde-windows-style.sh --dry-run
 ./kde-windows-style.sh --opacity 90 --style win11 --icon-theme win11 --launcher menu11 --theme dark
 ./kde-windows-style.sh --appearance-only --opacity 94 --no-icons --style breeze
+./kde-windows-style.sh --taskbar-align left --taskbar-size small --decoration win11 --menu-opacity 85 --no-recommended
 ./launch.sh
 ```
 
