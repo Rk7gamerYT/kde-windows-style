@@ -36,6 +36,7 @@ compilação ou download de temas. O pacote inclui:
 
 - interface Qt/Python e seus wheels PySide6/Shiboken;
 - Win11 icon theme e Win11OS Plasma Theme, de yeyushengfan258;
+- Menu11 Next 1.3, de Eisteed, para um menu no estilo Windows 11;
 - Fluent icon theme, de vinceliuice, como alternativa;
 - DoorOS-Dolphin pré-compilado para Ubuntu 26.04, além dos fontes;
 - scripts, instruções, licenças e ferramentas de restauração.
@@ -51,13 +52,15 @@ redistribuídos como uma máquina virtual. O pacote usa os componentes do KDE in
 - Tema claro ou escuro.
 - Estilo Win11OS da comunidade ou Breeze do KDE.
 - Ícones Win11, Fluent ou manter os ícones atuais.
+- Menu11 Next ou o menu nativo Kickoff. O botão Iniciar usa o ícone azul do pacote Win11, sem desenho novo.
 - Opção para configurar também layout, menu Iniciar e atalhos.
-- Painel inferior de 48 px, menu à esquerda, tarefas com ícones, bandeja, relógio e mostrar desktop.
+- Painel inferior de 48 px, menu à esquerda, tarefas com ícones, bandeja, relógio e mostrar desktop. A ordem é persistida com o Plasma parado, evitando que o novo botão Iniciar seja jogado para a direita durante a inicialização.
 - Duplo clique para abrir arquivos, com os botões das janelas à direita.
 
 Para ajustar só a aparência e a opacidade, deixe desmarcada **Configurar também o
 layout da barra, menu Iniciar e atalhos**. Assim seus widgets e atalhos atuais são mantidos.
 A intensidade final depende também da arte do tema e dos efeitos do compositor.
+Ao aplicar também o layout, o lançador anterior da barra principal é substituído pelo selecionado; a restauração recupera o lançador do backup.
 A barra principal é o primeiro painel inferior; os demais painéis são preservados.
 O app não troca seu wallpaper nem apaga jogos, arquivos ou aplicativos.
 
@@ -144,7 +147,7 @@ a barra pode desaparecer por alguns segundos. Uma falha tenta restaurar o backup
 
 ```bash
 ./kde-windows-style.sh --dry-run
-./kde-windows-style.sh --opacity 90 --style win11 --icon-theme win11 --theme dark
+./kde-windows-style.sh --opacity 90 --style win11 --icon-theme win11 --launcher menu11 --theme dark
 ./kde-windows-style.sh --appearance-only --opacity 94 --no-icons --style breeze
 ./launch.sh
 ```

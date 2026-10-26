@@ -93,9 +93,13 @@ class Window(QMainWindow):
         form.addRow('Estilo do Plasma',self.style)
         self.icons=QComboBox(); self.icons.addItem('Win11 · comunidade','win11'); self.icons.addItem('Fluent · comunidade','fluent'); self.icons.addItem('Manter os ícones atuais','keep')
         self.icons.setCurrentIndex(max(0,self.icons.findData(self.prefs.get('icon_theme','win11'))))
-        form.addRow('Ícones',self.icons); layout.addLayout(form)
+        form.addRow('Ícones',self.icons)
+        self.launcher=QComboBox();self.launcher.addItem('Menu11 Next · Windows 11','menu11');self.launcher.addItem('Menu nativo do KDE · Kickoff','kickoff')
+        self.launcher.setCurrentIndex(max(0,self.launcher.findData(self.prefs.get('launcher','menu11'))))
+        form.addRow('Menu Iniciar',self.launcher);layout.addLayout(form)
         self.layout_options = QCheckBox('Configurar também o layout da barra, menu Iniciar e atalhos')
         self.layout_options.setChecked(not (STATE/'original').exists()); layout.addWidget(self.layout_options)
+        self.launcher.currentIndexChanged.connect(lambda _index:self.layout_options.setChecked(True))
         row = QHBoxLayout()
         row.addWidget(button('Aplicar aparência', self.apply_style))
         row.addWidget(button('Restaurar visual anterior', self.restore_style))
@@ -260,7 +264,7 @@ class Window(QMainWindow):
 
     def apply_style(self):
         args=['--opacity',str(self.opacity.value()),'--theme',self.theme.currentData()]
-        args+=['--style',self.style.currentData()]
+        args+=['--style',self.style.currentData(),'--launcher',self.launcher.currentData()]
         if self.icons.currentData()=='keep':args.append('--no-icons')
         else:args+=['--icon-theme',self.icons.currentData()]
         if not self.layout_options.isChecked():args.append('--appearance-only')
@@ -298,7 +302,7 @@ class Window(QMainWindow):
             self.status.setText('Pronto. Configuração aplicada.')
             CONFIG.parent.mkdir(parents=True,exist_ok=True)
             temporary=CONFIG.with_suffix('.tmp')
-            temporary.write_text(json.dumps(dict(opacity=self.opacity.value(),theme=self.theme.currentData(),icon_theme=self.icons.currentData(),style=self.style.currentData())))
+            temporary.write_text(json.dumps(dict(opacity=self.opacity.value(),theme=self.theme.currentData(),icon_theme=self.icons.currentData(),style=self.style.currentData(),launcher=self.launcher.currentData())))
             temporary.replace(CONFIG)
             self.layout_options.setChecked(False)
         else:

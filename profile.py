@@ -34,6 +34,7 @@ OWNED += [DATA/'icons'/name for name in [ICON_NAME, ICON_NAME+'-light', ICON_NAM
 OWNED += [DATA/'applications'/name for name in MENU]
 OWNED += [DATA/'icons'/name for name in ['KDEWindowsWin11','KDEWindowsWin11-dark']]
 OWNED += [DATA/'color-schemes'/name for name in ['KDEWindowsWin11Dark.colors','KDEWindowsWin11Light.colors']]
+OWNED += [DATA/'plasma/plasmoids/menu.11.next',DATA/'kde-windows-style/start-menu-icon.svg']
 META, ALT, CTRL, SHIFT = 0x10000000, 0x08000000, 0x04000000, 0x02000000
 TAB, F4 = 0x01000001, 0x01000033
 SHORTCUTS = [
@@ -275,6 +276,33 @@ def install_win11_icons():
     marker.write_text(ref)
 
 
+def install_menu11():
+    archive=ROOT/'vendor/menu11-next.tar.gz'
+    digest='4a55c4e5b8756a1056334dce18a456c44b90c8883796dd353a9787d9970e9a6a'
+    if not archive.is_file() or hashlib.sha256(archive.read_bytes()).hexdigest()!=digest:
+        raise RuntimeError('Menu11 Next incluso ausente ou corrompido.')
+    target=DATA/'plasma/plasmoids/menu.11.next'
+    with tempfile.TemporaryDirectory() as temp:
+        with tarfile.open(archive) as tar:
+            tar.extractall(temp,filter='data')
+        meta=json.loads((Path(temp)/'metadata.json').read_text())
+        if meta['KPlugin']['Id']!='menu.11.next':raise RuntimeError('Pacote Menu11 inesperado.')
+        if target.exists():shutil.rmtree(target)
+        shutil.copytree(temp,target)
+    print('Menu11 Next 1.3 instalado, de Eisteed.')
+
+
+def install_start_icon():
+    target=DATA/'kde-windows-style/start-menu-icon.svg'
+    with tarfile.open(community_archive('win11-icons')) as tar:
+        suffix='/src/apps/scalable/distributor-logo-windows.svg'
+        members=[entry for entry in tar.getmembers() if entry.name.endswith(suffix) and entry.isfile()]
+        if len(members)!=1:raise RuntimeError('Ícone Iniciar não encontrado no pacote Win11.')
+        target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_bytes(tar.extractfile(members[0]).read())
+    return target.as_uri()
+
+
 def desktop_exec(args):
     def quote(text):
         for char in ('\\', '"', '`', '$'):
@@ -304,8 +332,10 @@ def install_menu():
         run('kbuildsycoca6', '--noincremental')
 
 
-def apply_panel(community_icons=True):
-    icon = 'view-app-grid' if community_icons else 'start-here-kde'
+def apply_panel(launcher='menu11'):
+    if launcher=='menu11':install_menu11()
+    icon=install_start_icon()
+    menu_type='menu.11.next' if launcher=='menu11' else 'org.kde.plasma.kickoff'
     result = script('''
     var ps = panels();
     var panel = ps.find(p => p.location === "bottom") || ps[0] || new Panel;
@@ -315,9 +345,16 @@ def apply_panel(community_icons=True):
     function ensure(type) {
         return panel.widgets().find(w => w.type === type) || panel.addWidget(type);
     }
-    var menu = ensure("org.kde.plasma.kickoff");
+    var menu = ensure(%s);
+    panel.widgets().forEach(function(w) {
+        if (["menu.11.next","org.kde.plasma.kickoff","org.kde.plasma.kicker","org.kde.plasma.kickerdash"].indexOf(w.type)>=0 && w.id!==menu.id) w.remove();
+    });
     menu.currentConfigGroup = ["General"];
     menu.writeConfig("icon", %s);
+    if (menu.type === "menu.11.next") {
+        menu.writeConfig("displayPosition", 0); menu.writeConfig("showAtCenter", false);
+        menu.writeConfig("numberRows", 3);
+    }
     var tasks = ensure("org.kde.plasma.icontasks");
     var tray = ensure("org.kde.plasma.systemtray");
     var clock = ensure("org.kde.plasma.digitalclock");
@@ -326,11 +363,12 @@ def apply_panel(community_icons=True):
     var all = panel.widgets();
     var middle = all.filter(w => [menu.id, tasks.id, tray.id, clock.id, desktop.id].indexOf(w.id) < 0);
     panel.currentConfigGroup = ["General"];
-    panel.writeConfig("AppletOrder", [menu.id, tasks.id].concat(middle.map(w => w.id)).concat([tray.id, clock.id, desktop.id]).join(";"));
-    print(JSON.stringify({id:panel.id, opacity:panel.opacity, height:panel.height}));
-    ''' % json.dumps(icon))
+    var order = [menu.id, tasks.id].concat(middle.map(w => w.id)).concat([tray.id, clock.id, desktop.id]).join(";");
+    panel.writeConfig("AppletOrder", order);
+    print(JSON.stringify({id:panel.id, order:order, opacity:panel.opacity, height:panel.height}));
+    ''' % (json.dumps(menu_type),json.dumps(icon)))
     print('Painel configurado:', result)
-    return json.loads(result)['id']
+    return json.loads(result)
 
 
 def prerequisites(icons):
@@ -361,6 +399,7 @@ def main():
     parser.add_argument('--theme', choices=['dark', 'light'], default='dark')
     parser.add_argument('--style', choices=['win11','breeze'], default='win11')
     parser.add_argument('--icon-theme', choices=['win11','fluent'], default='win11')
+    parser.add_argument('--launcher', choices=['menu11','kickoff'], default='menu11')
     args = parser.parse_args()
     if not 50 <= args.opacity <= 100:
         parser.error('--opacity deve ficar entre 50 e 100')
@@ -398,9 +437,12 @@ def main():
                 write_config('kwinrc', 'org.kde.kdecoration2', 'ButtonsOnLeft', '')
                 write_config('kwinrc', 'org.kde.kdecoration2', 'ButtonsOnRight', 'IAX')
                 write_config('kwinrc', 'ModifierOnlyShortcuts', 'Meta', 'org.kde.plasmashell,/PlasmaShell,org.kde.PlasmaShell,activateLauncherMenu')
-                panel_id = apply_panel(not args.no_icons)
+                panel_state = apply_panel(args.launcher)
+                panel_id = panel_state['id']
+                panel_order = panel_state['order']
                 set_shortcuts()
             else:
+                panel_order = None
                 panel_id = int(script('var p=panels().find(p=>p.location==="bottom") || panels()[0]; if(!p) throw new Error("Nenhuma barra encontrada"); print(p.id);'))
             run('qdbus6', 'org.kde.KWin', '/KWin', 'org.kde.KWin.reconfigure')
             # Some Plasma versions apply opacity live but omit its persistent key.
@@ -408,6 +450,10 @@ def main():
             try:
                 run('kwriteconfig6', '--file', CONFIG/'plasmashellrc', '--group', 'PlasmaViews',
                     '--group', f'Panel {panel_id}', '--key', 'panelOpacity', '2')
+                if panel_order is not None:
+                    run('kwriteconfig6', '--file', CONFIG/'plasma-org.kde.plasma.desktop-appletsrc',
+                        '--group', 'Containments', '--group', str(panel_id), '--group', 'General',
+                        '--key', 'AppletOrder', panel_order)
             finally:
                 start_plasma()
         except (Exception, KeyboardInterrupt):

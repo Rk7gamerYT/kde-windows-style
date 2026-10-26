@@ -90,3 +90,22 @@ class ProfileTests(unittest.TestCase):
         with patch.object(p,'SHORTCUTS',[('kwin','Overview',[p.META|p.TAB])]), patch.object(p,'accel',side_effect=fake):
             p.set_shortcuts()
         self.assertIn(('setForeignShortcutKeys',(p.action('kwin','Overview'),'[([285212673, 0, 0, 0],)]')),calls)
+
+    def test_panel_order_is_persisted_only_while_shell_is_stopped(self):
+        calls=[]
+        with tempfile.TemporaryDirectory() as tmp:
+            state=Path(tmp)/'state'
+            def record(*args,**kwargs):calls.append(args);return ''
+            with patch.object(p.sys,'argv',['profile.py','--no-icons','--style','breeze']), \
+                 patch.object(p,'STATE',state),patch.object(p,'prerequisites'), \
+                 patch.object(p,'backup',return_value=Path(tmp)/'backup'),patch.object(p,'install_menu'), \
+                 patch.object(p,'install_theme'),patch.object(p,'write_config'),patch.object(p,'set_shortcuts'), \
+                 patch.object(p,'apply_panel',return_value={'id':3,'order':'28;6;8;23;24'}), \
+                 patch.object(p,'run',side_effect=record), \
+                 patch.object(p,'stop_plasma',side_effect=lambda:calls.append(('stop',))), \
+                 patch.object(p,'start_plasma',side_effect=lambda:calls.append(('start',))):
+                p.main()
+        order_call=next(i for i,args in enumerate(calls) if 'AppletOrder' in args)
+        self.assertLess(calls.index(('stop',)),order_call)
+        self.assertLess(order_call,calls.index(('start',)))
+        self.assertEqual(calls[order_call][-1],'28;6;8;23;24')
