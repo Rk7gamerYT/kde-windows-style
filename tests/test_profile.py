@@ -157,3 +157,14 @@ class QuickSettingsTests(unittest.TestCase):
     def test_default_city_comes_from_time_zone(self):
         with patch.object(p,'run',return_value='America/Sao_Paulo'):
             self.assertEqual(p.default_city(),'Sao Paulo')
+
+    def test_menu11_search_patch_applies_to_bundled_menu(self):
+        import tarfile
+        with tempfile.TemporaryDirectory() as tmp:
+            with tarfile.open(p.ROOT/'vendor/menu11-next.tar.gz') as tar:
+                tar.extract('contents/ui/MenuRepresentation.qml',tmp,filter='data')
+            qml=Path(tmp)/'contents/ui/MenuRepresentation.qml'
+            p.patch_menu11_search(qml)
+            text=qml.read_text()
+            self.assertIn('id: searchModeProbe',text)
+            self.assertIn('|| searchMode',text)

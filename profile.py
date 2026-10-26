@@ -356,6 +356,7 @@ def install_menu11():
     # The bundled translations still use the old dittomenu domain; Plasma looks them up by plugin id.
     for mo in target.glob('contents/locale/*/LC_MESSAGES/*.mo'):
         mo.rename(mo.with_name('plasma_applet_menu.11.next.mo'))
+    patch_menu11_search(target/'contents/ui/MenuRepresentation.qml')
     # Fuller pt_BR translation of the menu, using Windows 11 wording (assets/menu11-locale/*.po).
     for mo in (ROOT/'assets/menu11-locale').glob('*.mo'):
         locale=target/'contents/locale'/mo.stem/'LC_MESSAGES'
@@ -395,6 +396,47 @@ def tray_overflow(enabled):
     if subprocess.run(['pgrep', '-f', 'tray_overflow.py --watch'], capture_output=True).returncode:
         subprocess.Popen(['python3', str(ROOT/'tray_overflow.py'), '--watch'], start_new_session=True,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+# The taskbar Search box (assets/search) leaves this flag and opens Start; Start then shows its
+# search page right away, with the Apps/Files/Settings filters, like Windows 11 Search.
+MENU11_SEARCH_PATCH = [
+    ('    property bool searching: (searchField.text != "")\n',
+     '    property bool searchMode: false\n'
+     '    property bool searching: (searchField.text != "") || searchMode\n'),
+    # The popup window only takes items, so the probe sits with the menu's own data source.
+    ('        Plasma5Support.DataSource {\n            id: executable\n',
+     '        Plasma5Support.DataSource {\n'
+     '            id: searchModeProbe\n'
+     '            engine: "executable"\n'
+     '            onNewData: (source, data) => {\n'
+     '                disconnectSource(source);\n'
+     '                if ((data["stdout"] || "").trim() === "search") root.searchMode = true;\n'
+     '            }\n'
+     '        }\n\n'
+     '        Plasma5Support.DataSource {\n            id: executable\n'),
+    ('            reset();\n            rootItem.loadFolders();',
+     '            reset();\n'
+     '            searchModeProbe.connectSource(\'f="$XDG_RUNTIME_DIR/kde-windows-style-search"; [ -e "$f" ] && rm -f "$f" && echo search # \' + Date.now());\n'
+     '            rootItem.loadFolders();'),
+    ('        searchDebounce.stop();\n        rootItem.pluginResults = [];',
+     '        searchDebounce.stop();\n        root.searchMode = false;\n        rootItem.pluginResults = [];'),
+    ('                    if (root.searching) {\n                        searchField.clear();',
+     '                    if (searchField.text !== "") {\n                        searchField.clear();'),
+    ('                            return i18n("No results for \\"%1\\"", searchField.text);',
+     '                            if (searchField.text === "") return i18n("Digite para pesquisar aplicativos, arquivos e configurações");\n'
+     '                            return i18n("No results for \\"%1\\"", searchField.text);'),
+]
+
+
+def patch_menu11_search(qml):
+    text=qml.read_text()
+    if any(old not in text for old, _ in MENU11_SEARCH_PATCH):
+        print('Aviso: esta versão do Menu11 não aceita a abertura direta na pesquisa.')
+        return
+    for old, new in MENU11_SEARCH_PATCH:
+        text=text.replace(old, new, 1)
+    qml.write_text(text)
 
 
 def install_start_icon():

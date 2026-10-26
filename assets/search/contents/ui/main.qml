@@ -1,5 +1,5 @@
-// Windows 11 style search box on the taskbar. Like on Windows, it opens Start with the search field
-// focused (Menu11 Next), so typing right away searches apps, files and settings.
+// Windows 11 style search box on the taskbar. Like on Windows, it opens the search page of Start
+// (Menu11 Next, patched by profile.py to read the flag left here), ready for typing.
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -26,7 +26,8 @@ PlasmoidItem {
         Layout.fillHeight: true
         hoverEnabled: true
         cursorShape: Qt.IBeamCursor
-        onClicked: shell.connectSource("qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu # " + Date.now())
+        onClicked: shell.connectSource('touch "$XDG_RUNTIME_DIR/kde-windows-style-search"; '
+            + "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu # " + Date.now())
 
         Rectangle {
             id: pill
