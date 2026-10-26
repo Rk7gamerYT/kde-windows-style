@@ -232,19 +232,21 @@ class TaskbarPreview(QWidget):
             bloom = QRadialGradient(QPointF(area.width()*cx, area.height()*cy), area.width()*r)
             c = QColor(color); c.setAlpha(210 if dark else 170); bloom.setColorAt(0, c)
             c.setAlpha(0); bloom.setColorAt(1, c); p.fillRect(area, bloom)
-        bar = QRectF(area.left(), area.bottom()-40, area.width(), 40)
+        small = self.window.taskbar_size.currentData()=='small'
+        bar = QRectF(area.left(), area.bottom()-(34 if small else 40), area.width(), 34 if small else 40)
         base = QColor('#1c1c1c' if dark else '#f3f3f3'); base.setAlphaF(self.window.opacity.value()/100)
         p.fillRect(bar, base)
         p.setPen(QPen(QColor(255, 255, 255, 30) if dark else QColor(0, 0, 0, 25), 1)); p.drawLine(bar.topLeft(), bar.topRight())
-        size, gap, count = 26, 8, 6
+        size, gap, count = (22 if small else 26), 8, 6
         x = area.center().x()-(count*size+(count-1)*gap)/2; y = bar.center().y()-size/2
+        if self.window.taskbar_align.currentData()=='left':x = area.left()+10
         colors = ['#0078d4', '#f2c94c', '#2d9cdb', '#eb5757', '#27ae60', '#9b51e0']
         for i, color in enumerate(colors):
             cell = QRectF(x+i*(size+gap), y, size, size)
             if i==0:
                 p.setPen(Qt.NoPen); p.setBrush(QColor('#4cc2ff' if dark else '#0067c0'))
                 for dx in (0, 1):
-                    for dy in (0, 1):p.drawRoundedRect(QRectF(cell.left()+4+dx*10, cell.top()+4+dy*10, 8.5, 8.5), 1.5, 1.5)
+                    for dy in (0, 1):p.drawRoundedRect(QRectF(cell.left()+4+dx*size*0.38, cell.top()+4+dy*size*0.38, size*0.33, size*0.33), 1.5, 1.5)
                 continue
             p.setPen(Qt.NoPen); p.setBrush(QColor(color)); p.drawRoundedRect(cell.adjusted(3, 3, -3, -3), 5, 5)
         p.setPen(QColor('#ffffff' if dark else '#1a1a1a')); font = p.font(); font.setPixelSize(11); p.setFont(font)
@@ -365,6 +367,9 @@ class Window(QMainWindow):
         self.preview = TaskbarPreview(self)
         self.opacity.valueChanged.connect(self.update_opacity_label)
         self.theme.currentIndexChanged.connect(self.preview.update)
+        self.taskbar_align = self.choice([('Centro', 'center'), ('Esquerda', 'left')], 'taskbar_align', 'center')
+        self.taskbar_size = self.choice([('Padrão', 'normal'), ('Pequeno', 'small')], 'taskbar_size', 'normal')
+        for combo in (self.taskbar_align, self.taskbar_size):combo.currentIndexChanged.connect(self.preview.update)
         layout.addWidget(panel(self.preview, margins=(8, 8, 8, 8)))
         layout.addWidget(label('Barra de tarefas', 'section'))
         self.opacity_label = label('', wrap=False)
@@ -373,6 +378,8 @@ class Window(QMainWindow):
         hints = QHBoxLayout(); hints.addWidget(label('Mais transparente', 'caption', False)); hints.addStretch()
         hints.addWidget(label('Mais sólida', 'caption', False)); row.addLayout(hints)
         layout.addWidget(card(self.opacity_label, '88% é uma transparência leve. 100% deixa o fundo sólido.', slider, 'preferences-desktop-effects'))
+        layout.addWidget(card('Alinhamento', 'No centro, como no Windows 11, ou à esquerda, como no Windows 10.', self.taskbar_align, 'format-justify-center'))
+        layout.addWidget(card('Tamanho dos ícones', 'Pequeno deixa a barra com 40 px em vez de 48 px.', self.taskbar_size, 'zoom-fit-height'))
         layout.addWidget(label('Personalização', 'section'))
         layout.addWidget(card('Modo de cor', 'Tema claro ou escuro para o Plasma e os aplicativos.', self.theme, 'preferences-desktop-color'))
         self.style=QComboBox(); self.style.addItem('Win11OS · comunidade','win11'); self.style.addItem('Breeze · KDE','breeze')
@@ -384,17 +391,34 @@ class Window(QMainWindow):
         self.launcher=QComboBox();self.launcher.addItem('Menu11 Next · Windows 11','menu11');self.launcher.addItem('Menu nativo do KDE · Kickoff','kickoff')
         self.launcher.setCurrentIndex(max(0,self.launcher.findData(self.prefs.get('launcher','menu11'))))
         layout.addWidget(card('Menu Iniciar', 'Menu centralizado com pesquisa, fixados e recomendados.', self.launcher, 'start-here'))
+        self.recommended = Toggle(); self.recommended.setChecked(self.prefs.get('recommended', True))
+        layout.addWidget(card('Mostrar Recomendados', 'Arquivos recentes abaixo dos aplicativos fixados no menu Iniciar.', self.recommended, 'document-open-recent'))
+        layout.addWidget(label('Janelas e menus', 'section'))
+        self.decoration = self.choice([('Win11OS · Windows 11', 'win11'), ('Breeze · KDE', 'breeze')], 'decoration', 'win11')
+        layout.addWidget(card('Bordas das janelas', 'Cantos arredondados e botões minimizar, maximizar e fechar à direita.', self.decoration, 'preferences-system-windows-actions'))
+        self.menu_opacity = self.choice([('Acrílico · translúcido', 85), ('Leve', 95), ('Sólido', 100)], 'menu_opacity', 85)
+        layout.addWidget(card('Menus de contexto', 'Menus do botão direito com fundo desfocado, como no Windows 11. Vale para apps abertos depois de aplicar.',
+                              self.menu_opacity, 'application-menu'))
         self.layout_options = Toggle()
         self.layout_options.setChecked(not (STATE/'original').exists())
         layout.addWidget(card('Layout, menu Iniciar e atalhos', 'Reorganiza a barra e ativa os atalhos do Windows. '
-                              'Desligado, só cores, ícones e opacidade mudam.', self.layout_options, 'preferences-system-windows'))
-        self.launcher.currentIndexChanged.connect(lambda _index:self.layout_options.setChecked(True))
+                              'Desligado, só cores, ícones, bordas, menus e opacidade mudam.', self.layout_options, 'preferences-system-windows'))
+        # These live in the taskbar layout, so changing them needs the layout step.
+        for combo in (self.launcher, self.taskbar_align, self.taskbar_size):
+            combo.currentIndexChanged.connect(lambda _index:self.layout_options.setChecked(True))
+        self.recommended.toggled.connect(lambda _on:self.layout_options.setChecked(True))
         row = QHBoxLayout(); row.setContentsMargins(0, 14, 0, 0); row.setSpacing(8)
         row.addWidget(button('Aplicar aparência', self.apply_style))
         row.addWidget(button('Restaurar visual anterior', self.restore_style)); row.addStretch()
         layout.addLayout(row); layout.addStretch()
         self.update_opacity_label()
         return page
+
+    def choice(self, items, key, default):
+        combo = QComboBox()
+        for text, data in items:combo.addItem(text, data)
+        combo.setCurrentIndex(max(0, combo.findData(self.prefs.get(key, default))))
+        return combo
 
     def update_opacity_label(self):
         value = self.opacity.value()
@@ -569,6 +593,9 @@ class Window(QMainWindow):
     def apply_style(self):
         args=['--opacity',str(self.opacity.value()),'--theme',self.theme.currentData()]
         args+=['--style',self.style.currentData(),'--launcher',self.launcher.currentData()]
+        args+=['--decoration',self.decoration.currentData(),'--menu-opacity',str(self.menu_opacity.currentData())]
+        args+=['--taskbar-align',self.taskbar_align.currentData(),'--taskbar-size',self.taskbar_size.currentData()]
+        if not self.recommended.isChecked():args.append('--no-recommended')
         if self.icons.currentData()=='keep':args.append('--no-icons')
         else:args+=['--icon-theme',self.icons.currentData()]
         if not self.layout_options.isChecked():args.append('--appearance-only')
@@ -605,7 +632,10 @@ class Window(QMainWindow):
         if code==0:
             self.set_status('Pronto. Configuração aplicada.', 'ok')
             self.prefs.update(opacity=self.opacity.value(),theme=self.theme.currentData(),icon_theme=self.icons.currentData(),
-                              style=self.style.currentData(),launcher=self.launcher.currentData())
+                              style=self.style.currentData(),launcher=self.launcher.currentData(),
+                              decoration=self.decoration.currentData(),menu_opacity=self.menu_opacity.currentData(),
+                              taskbar_align=self.taskbar_align.currentData(),taskbar_size=self.taskbar_size.currentData(),
+                              recommended=self.recommended.isChecked())
             self.save_prefs()
             self.layout_options.setChecked(False)
         else:

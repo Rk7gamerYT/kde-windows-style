@@ -85,6 +85,10 @@ redistribuídos como uma máquina virtual. O pacote usa os componentes do KDE in
 - Menu11 Next (centralizado acima da barra como no Windows 11, com Fixados e Recomendados em português) ou o menu nativo Kickoff. O botão Iniciar usa o ícone azul do pacote Win11, sem desenho novo.
 - Opção para configurar também layout, menu Iniciar e atalhos.
 - Painel inferior de 48 px como no Windows 11: botão Iniciar e ícones dos apps centralizados; bandeja, relógio compacto (hora sobre a data) e mostrar desktop à direita. A ordem é persistida com o Plasma parado, evitando que o novo botão Iniciar seja jogado para a direita durante a inicialização.
+- Barra alinhada ao centro (Windows 11) ou à esquerda (Windows 10), com ícones de tamanho padrão (48 px) ou pequeno (40 px). À esquerda, o menu Iniciar abre junto ao botão, como no Windows.
+- Seção Recomendados do menu Iniciar pode ser escondida.
+- Bordas das janelas Win11OS (Aurorae, da comunidade): cantos arredondados e botões largos minimizar, maximizar e fechar, nas versões clara e escura. Ou Breeze com borda fina.
+- Menus de contexto dos aplicativos translúcidos com desfoque, como os menus acrílicos do Windows 11 (acrílico, leve ou sólido). Vale para os apps abertos depois de aplicar.
 - Duplo clique para abrir arquivos, com os botões das janelas à direita.
 
 Para ajustar só a aparência e a opacidade, deixe desmarcada **Configurar também o
@@ -193,6 +197,7 @@ a barra pode desaparecer por alguns segundos. Uma falha tenta restaurar o backup
 ./kde-windows-style.sh --dry-run
 ./kde-windows-style.sh --opacity 90 --style win11 --icon-theme win11 --launcher menu11 --theme dark
 ./kde-windows-style.sh --appearance-only --opacity 94 --no-icons --style breeze
+./kde-windows-style.sh --taskbar-align left --taskbar-size small --decoration win11 --menu-opacity 85 --no-recommended
 ./launch.sh
 ```
 

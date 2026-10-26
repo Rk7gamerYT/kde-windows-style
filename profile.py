@@ -25,7 +25,9 @@ THEME = 'kde-windows-style'
 ICON_NAME = 'KDEWindowsFluent'
 ICON_REF = 'c8a244f571ef8fb47812bdc9dbce76546cedce69'
 ICON_SHA256 = '07b6b593ab557e07f0a7cdb232cda99214af13fb74ad6ce1e77d666057647767'
-FILES = ['plasma-org.kde.plasma.desktop-appletsrc', 'plasmashellrc', 'plasmarc', 'kdeglobals', 'kwinrc']
+FILES = ['plasma-org.kde.plasma.desktop-appletsrc', 'plasmashellrc', 'plasmarc', 'kdeglobals', 'kwinrc', 'breezerc']
+# Backups made before breezerc was managed only cover these files, so restoring them leaves breezerc alone.
+LEGACY_FILES = FILES[:5]
 MENU = ['kde-windows-style-apply.desktop', 'kde-windows-style-restore.desktop',
         'kde-windows-style-settings.desktop', 'kde-windows-style-screenshot.desktop']
 OWNED = [DATA/'plasma/desktoptheme'/THEME]
@@ -35,6 +37,8 @@ OWNED += [DATA/'applications'/name for name in MENU]
 OWNED += [DATA/'icons'/name for name in ['KDEWindowsWin11','KDEWindowsWin11-dark']]
 OWNED += [DATA/'color-schemes'/name for name in ['KDEWindowsWin11Dark.colors','KDEWindowsWin11Light.colors']]
 OWNED += [DATA/'plasma/plasmoids/menu.11.next',DATA/'kde-windows-style/start-menu-icon.svg']
+DECORATION = 'KDEWindowsWin11'
+OWNED += [DATA/'aurorae/themes'/(DECORATION+suffix) for suffix in ['-dark', '-light']]
 META, ALT, CTRL, SHIFT = 0x10000000, 0x08000000, 0x04000000, 0x02000000
 TAB, F4, ESC = 0x01000001, 0x01000033, 0x01000000
 UP, DOWN, PGUP, PGDOWN, SCREENSAVER = 0x01000013, 0x01000015, 0x01000016, 0x01000017, 0x010000ba
@@ -121,6 +125,8 @@ def stop_plasma():
 
 
 def start_plasma():
+    # Applying twice in a row restarts Plasma often enough to hit systemd's start limit.
+    run('systemctl', '--user', 'reset-failed', 'plasma-plasmashell.service', check=False)
     run('systemctl', '--user', 'start', 'plasma-plasmashell.service')
 
 
@@ -144,7 +150,7 @@ def backup():
             elif source.is_file():
                 (location/'owned').mkdir(exist_ok=True)
                 shutil.copy2(source, location/'owned'/str(i))
-        (location/'manifest.json').write_text(json.dumps({'owned': entries, 'shortcuts': shortcuts}, indent=2))
+        (location/'manifest.json').write_text(json.dumps({'owned': entries, 'files': FILES, 'shortcuts': shortcuts}, indent=2))
     finally:
         start_plasma()
     (STATE/'latest').write_text(str(location))
@@ -161,7 +167,7 @@ def restore(location):
     manifest['owned']=entries+[{'path':str(path),'exists':False,'directory':False} for path in OWNED[len(entries):]]
     stop_plasma()
     try:
-        for name in FILES:
+        for name in manifest.get('files', LEGACY_FILES):
             source, target = location/name, CONFIG/name
             if source.exists():
                 shutil.copy2(source, target)
@@ -236,6 +242,50 @@ def install_theme(opacity, dark, style="breeze"):
         shutil.copy2(theme/'colors',color_file)
     run('plasma-apply-colorscheme', scheme)
     run('plasma-apply-desktoptheme', THEME)
+
+
+def install_decoration(dark):
+    """Win11OS window borders (Aurorae): rounded corners and wide Windows 11 caption buttons."""
+    ref=ASSETS['win11-plasma'][1]
+    with tempfile.TemporaryDirectory() as temp:
+        with tarfile.open(community_archive('win11-plasma')) as tar:
+            tar.extractall(temp, filter='data')
+        for variant in ['dark', 'light']:
+            source=Path(temp)/('Win11OS-kde-'+ref)/'aurorae'/('Win11OS-'+variant)
+            name=DECORATION+'-'+variant
+            target=DATA/'aurorae/themes'/name
+            if target.exists():shutil.rmtree(target)
+            shutil.copytree(source, target)
+            # Aurorae finds the layout as <theme name>rc, so the renamed copy needs a renamed rc file.
+            (target/('Win11OS-'+variant+'rc')).rename(target/(name+'rc'))
+            meta=target/'metadata.desktop'
+            meta.write_text(meta.read_text().replace('Win11OS-'+variant, name))
+    theme=DECORATION+('-dark' if dark else '-light')
+    write_config('kwinrc', 'org.kde.kdecoration2', 'library', 'org.kde.kwin.aurorae')
+    write_config('kwinrc', 'org.kde.kdecoration2', 'theme', '__aurorae__svg__'+theme)
+    write_config('kwinrc', 'org.kde.kdecoration2', 'BorderSize', 'Normal')
+    write_config('kwinrc', 'org.kde.kdecoration2', 'BorderSizeAuto', 'false')
+    print('Bordas de janela Win11OS instaladas, de yeyushengfan258 (GPL-3.0).')
+
+
+def apply_decoration(style, dark):
+    if style=='win11':
+        install_decoration(dark)
+    else:
+        # Breeze with the thin outline Windows 11 draws around windows.
+        write_config('kwinrc', 'org.kde.kdecoration2', 'library', 'org.kde.breeze')
+        write_config('kwinrc', 'org.kde.kdecoration2', 'theme', 'Breeze')
+        write_config('kwinrc', 'org.kde.kdecoration2', 'BorderSize', 'Tiny')
+        write_config('kwinrc', 'org.kde.kdecoration2', 'BorderSizeAuto', 'false')
+    # Minimize, maximize and close on the right, as on Windows.
+    write_config('kwinrc', 'org.kde.kdecoration2', 'ButtonsOnLeft', '')
+    write_config('kwinrc', 'org.kde.kdecoration2', 'ButtonsOnRight', 'IAX')
+
+
+def apply_menus(opacity):
+    """Context menus of Qt apps: translucent with blur behind, like Windows 11 acrylic menus."""
+    write_config('breezerc', 'Style', 'MenuOpacity', opacity)
+    write_config('kwinrc', 'Plugins', 'blurEnabled', 'true')
 
 
 def install_icons():
@@ -348,14 +398,14 @@ def install_menu():
         run('kbuildsycoca6', '--noincremental')
 
 
-def apply_panel(launcher='menu11'):
+def apply_panel(launcher='menu11', align='center', size='normal', recommended=True):
     if launcher=='menu11':install_menu11()
     icon=install_start_icon()
     menu_type='menu.11.next' if launcher=='menu11' else 'org.kde.plasma.kickoff'
     result = script('''
     var ps = panels();
     var panel = ps.find(p => p.location === "bottom") || ps[0] || new Panel;
-    panel.location = "bottom"; panel.height = 48;
+    panel.location = "bottom"; panel.height = %d; var center = %s;
     panel.alignment = "left"; panel.hiding = "none"; panel.lengthMode = "fill";
     panel.floating = false; panel.opacity = "translucent";
     function ensure(type) {
@@ -368,10 +418,12 @@ def apply_panel(launcher='menu11'):
     menu.currentConfigGroup = ["General"];
     menu.writeConfig("icon", %s);
     if (menu.type === "menu.11.next") {
-        // Windows 11 opens Start centered just above the taskbar: 6x3 pinned grid, recommended files below.
-        menu.writeConfig("displayPosition", 2); menu.writeConfig("showAtCenter", true);
+        // Windows 11 opens Start just above the Start button: centered with a centered taskbar, at the
+        // left edge with a left-aligned one. 6x3 pinned grid, recommended files below, user and power at the bottom.
+        menu.writeConfig("displayPosition", center ? 2 : 0); menu.writeConfig("showAtCenter", center);
         menu.writeConfig("numberColumns", 6); menu.writeConfig("numberRows", 3);
-        menu.writeConfig("showRecentDocs", true); menu.writeConfig("viewUser", true);
+        menu.writeConfig("showRecentDocs", %s); menu.writeConfig("showRecentApps", false);
+        menu.writeConfig("viewUser", true); menu.writeConfig("labels2lines", false);
     }
     var tasks = ensure("org.kde.plasma.icontasks");
     // Windows 11 centers Start and the app icons, so the task list only takes the space it needs.
@@ -379,7 +431,7 @@ def apply_panel(launcher='menu11'):
     panel.widgets().forEach(function(w) {
         if (["org.kde.plasma.pager","org.kde.plasma.marginsseparator","org.kde.plasma.panelspacer"].indexOf(w.type)>=0) w.remove();
     });
-    var left = panel.addWidget("org.kde.plasma.panelspacer");
+    var left = center ? panel.addWidget("org.kde.plasma.panelspacer") : null;
     var right = panel.addWidget("org.kde.plasma.panelspacer");
     var tray = ensure("org.kde.plasma.systemtray");
     var clock = ensure("org.kde.plasma.digitalclock");
@@ -390,15 +442,17 @@ def apply_panel(launcher='menu11'):
     clock.writeConfig("showSeconds", 0);
     var desktop = ensure("org.kde.plasma.showdesktop");
     var all = panel.widgets();
-    var fixed = [left.id, menu.id, tasks.id, right.id, tray.id, clock.id, desktop.id];
+    var start = (center ? [left.id] : []).concat([menu.id, tasks.id, right.id]);
+    var fixed = start.concat([tray.id, clock.id, desktop.id]);
     var removed = ["org.kde.plasma.pager","org.kde.plasma.marginsseparator","org.kde.plasma.panelspacer",
                    "menu.11.next","org.kde.plasma.kickoff","org.kde.plasma.kicker","org.kde.plasma.kickerdash"];
     var middle = all.filter(w => fixed.indexOf(w.id) < 0 && removed.indexOf(w.type) < 0);
     panel.currentConfigGroup = ["General"];
-    var order = [left.id, menu.id, tasks.id, right.id].concat(middle.map(w => w.id)).concat([tray.id, clock.id, desktop.id]).join(";");
+    var order = start.concat(middle.map(w => w.id)).concat([tray.id, clock.id, desktop.id]).join(";");
     panel.writeConfig("AppletOrder", order);
     print(JSON.stringify({id:panel.id, order:order, opacity:panel.opacity, height:panel.height}));
-    ''' % (json.dumps(menu_type),json.dumps(icon)))
+    ''' % (40 if size=='small' else 48, json.dumps(align=='center'), json.dumps(menu_type), json.dumps(icon),
+           json.dumps(recommended)))
     print('Painel configurado:', result)
     return json.loads(result)
 
@@ -432,11 +486,20 @@ def main():
     parser.add_argument('--style', choices=['win11','breeze'], default='win11')
     parser.add_argument('--icon-theme', choices=['win11','fluent'], default='win11')
     parser.add_argument('--launcher', choices=['menu11','kickoff'], default='menu11')
+    parser.add_argument('--decoration', choices=['win11','breeze'], default='win11', help='bordas e botões das janelas')
+    parser.add_argument('--menu-opacity', type=int, default=85, help='opacidade dos menus de contexto: 50 a 100 (padrão: 85)')
+    parser.add_argument('--taskbar-align', choices=['center','left'], default='center')
+    parser.add_argument('--taskbar-size', choices=['normal','small'], default='normal', help='48 px ou 40 px')
+    parser.add_argument('--no-recommended', action='store_true', help='esconder a seção Recomendados do menu Iniciar')
     args = parser.parse_args()
     if not 50 <= args.opacity <= 100:
         parser.error('--opacity deve ficar entre 50 e 100')
+    if not 50 <= args.menu_opacity <= 100:
+        parser.error('--menu-opacity deve ficar entre 50 e 100')
     if args.dry_run:
-        print(f'Plano: backup; painel inferior de 48 px, opacidade {args.opacity}%; tema {args.theme}; '
+        print(f'Plano: backup; painel inferior de {40 if args.taskbar_size=="small" else 48} px alinhado '
+              f'{"ao centro" if args.taskbar_align=="center" else "à esquerda"}, opacidade {args.opacity}%; tema {args.theme}; '
+              f'bordas {args.decoration}; menus com {args.menu_opacity}% de opacidade; '
               f'ícones {"atuais" if args.no_icons else "Fluent"}; menu e atalhos Windows. Nenhuma alteração.\n'
               f'Restauração: {args.restore or "não solicitada"}')
         return
@@ -464,12 +527,12 @@ def main():
                     icon_theme=ICON_NAME+('-dark' if args.theme=='dark' else '-light')
                 write_config('kdeglobals', 'Icons', 'Theme', icon_theme)
             install_theme(args.opacity, args.theme == 'dark',args.style)
+            apply_decoration(args.decoration, args.theme == 'dark')
+            apply_menus(args.menu_opacity)
             if not args.appearance_only:
                 write_config('kdeglobals', 'KDE', 'SingleClick', 'false')
-                write_config('kwinrc', 'org.kde.kdecoration2', 'ButtonsOnLeft', '')
-                write_config('kwinrc', 'org.kde.kdecoration2', 'ButtonsOnRight', 'IAX')
                 write_config('kwinrc', 'ModifierOnlyShortcuts', 'Meta', 'org.kde.plasmashell,/PlasmaShell,org.kde.PlasmaShell,activateLauncherMenu')
-                panel_state = apply_panel(args.launcher)
+                panel_state = apply_panel(args.launcher, args.taskbar_align, args.taskbar_size, not args.no_recommended)
                 panel_id = panel_state['id']
                 panel_order = panel_state['order']
                 set_shortcuts()
@@ -494,7 +557,7 @@ def main():
             raise
         if not (STATE/'original').exists():
             (STATE/'original').write_text(str(location))
-        print('Pronto! Menu Iniciar, barra levemente translúcida, ícones e atalhos aplicados.')
+        print('Pronto! Menu Iniciar, barra levemente translúcida, bordas, menus, ícones e atalhos aplicados.')
         print('Desfazer: '+desktop_exec([ROOT/'kde-windows-style.sh', '--restore']))
 
 
