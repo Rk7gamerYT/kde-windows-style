@@ -9,7 +9,27 @@ O perfil começa com **88% de opacidade**, para uma transparência leve.
 
 ![Interface do aplicativo](assets/interface.png)
 
-## Instalar com um comando
+## Virar Windows 11 com um comando
+
+Na sessão KDE, execute **sem sudo**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Rk7gamerYT/kde-windows-style/main/windows11.sh | bash
+```
+
+Esse único script instala o app no seu usuário e já aplica tudo: tema Win11OS escuro,
+ícones Win11, barra inferior de 48 px com Menu11 Next, botões das janelas à direita
+e os atalhos do Windows da tabela abaixo. Antes de qualquer mudança é criado um backup.
+Para escolher outras opções, passe-as depois de `bash -s --`, por exemplo
+`... | bash -s -- --theme light --opacity 94`. Dentro de uma pasta clonada, basta `./windows11.sh`.
+
+Para desfazer:
+
+```bash
+~/.local/share/kde-windows-style/app/kde-windows-style.sh --restore
+```
+
+## Instalar só o app com interface
 
 Na sessão KDE, execute **sem sudo**:
 
@@ -92,6 +112,11 @@ Ao aplicar também o layout e os atalhos:
 | Win+R | Executar/pesquisar com KRunner |
 | Win+I | Configurações do KDE |
 | Win+D | Mostrar área de trabalho |
+| Win+L | Bloquear a sessão |
+| Win+↑ / Win+↓ | Maximizar / minimizar janela |
+| Win+← / Win+→ | Encaixar janela à esquerda / direita |
+| Win+V | Histórico da área de transferência |
+| Ctrl+Shift+Esc | Monitor do sistema (Gerenciador de Tarefas) |
 | Win+Tab | Visão geral |
 | Alt+Tab | Alternar entre janelas |
 | Alt+F4 | Fechar janela |

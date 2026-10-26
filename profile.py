@@ -36,12 +36,20 @@ OWNED += [DATA/'icons'/name for name in ['KDEWindowsWin11','KDEWindowsWin11-dark
 OWNED += [DATA/'color-schemes'/name for name in ['KDEWindowsWin11Dark.colors','KDEWindowsWin11Light.colors']]
 OWNED += [DATA/'plasma/plasmoids/menu.11.next',DATA/'kde-windows-style/start-menu-icon.svg']
 META, ALT, CTRL, SHIFT = 0x10000000, 0x08000000, 0x04000000, 0x02000000
-TAB, F4 = 0x01000001, 0x01000033
+TAB, F4, ESC = 0x01000001, 0x01000033, 0x01000000
+UP, DOWN, PGUP, PGDOWN, SCREENSAVER = 0x01000013, 0x01000015, 0x01000016, 0x01000017, 0x010000ba
 SHORTCUTS = [
     ('kwin', 'Walk Through Windows', [ALT | TAB]),
     ('kwin', 'Overview', [META | TAB, META | ord('W')]),
     ('kwin', 'Show Desktop', [META | ord('D')]),
     ('kwin', 'Window Close', [ALT | F4]),
+    # Win+Up/Down maximize and minimize as on Windows; the tile actions give up those keys.
+    ('kwin', 'Window Quick Tile Top', []),
+    ('kwin', 'Window Quick Tile Bottom', []),
+    ('kwin', 'Window Maximize', [META | UP, META | PGUP]),
+    ('kwin', 'Window Minimize', [META | DOWN, META | PGDOWN]),
+    ('ksmserver', 'Lock Session', [META | ord('L'), SCREENSAVER]),
+    ('org.kde.plasma-systemmonitor.desktop', '_launch', [CTRL | SHIFT | ESC, META | ESC]),
     ('org.kde.dolphin.desktop', '_launch', [META | ord('E')]),
     ('org.kde.krunner.desktop', '_launch', [META | ord('R'), ALT | ord(' '), ALT | 0x01000031]),
     ('systemsettings.desktop', '_launch', [META | ord('I')]),
