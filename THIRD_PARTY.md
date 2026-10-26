@@ -34,3 +34,5 @@ Checksum do pacote completo: arquivo `.sha256` junto da Release.
 O ícone do botão Iniciar é `src/apps/scalable/distributor-logo-windows.svg` do pacote Win11 acima, copiado sem redesenho.
 Checksum Menu11 Next: `4a55c4e5b8756a1056334dce18a456c44b90c8883796dd353a9787d9970e9a6a`.
 A tradução pt_BR completa do Menu11 Next em `assets/menu11-locale/` estende a tradução original do pacote e segue a mesma licença.
+
+O widget de clima consulta a API pública do [Open-Meteo](https://open-meteo.com) (dados CC BY 4.0) direto do Plasma, sem chave. Só o nome da cidade e as coordenadas vão na consulta.

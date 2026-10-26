@@ -1,6 +1,7 @@
 import gzip
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 import sys
@@ -100,7 +101,7 @@ class ProfileTests(unittest.TestCase):
                  patch.object(p,'STATE',state),patch.object(p,'prerequisites'), \
                  patch.object(p,'backup',return_value=Path(tmp)/'backup'),patch.object(p,'install_menu'), \
                  patch.object(p,'install_theme'),patch.object(p,'write_config'),patch.object(p,'set_shortcuts'), \
-                 patch.object(p,'install_decoration'), \
+                 patch.object(p,'install_decoration'),patch.object(p,'tray_overflow'), \
                  patch.object(p,'apply_panel',return_value={'id':3,'order':'28;6;8;23;24'}), \
                  patch.object(p,'run',side_effect=record), \
                  patch.object(p,'stop_plasma',side_effect=lambda:calls.append(('stop',))), \
@@ -135,3 +136,35 @@ class DecorationTests(unittest.TestCase):
                  patch.object(p,'start_plasma'),patch.object(p,'set_shortcuts'),patch.object(p,'run'),patch.object(p,'install_menu'):
                 p.restore(backup)
             self.assertTrue((config/'breezerc').exists())
+
+
+class QuickSettingsTests(unittest.TestCase):
+    def test_quick_settings_widget_is_installed_with_runnable_status_script(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(p,'DATA',Path(tmp)):
+                p.install_widgets()
+            target=Path(tmp)/'plasma/plasmoids'/p.QUICK_SETTINGS
+            meta=json.loads((target/'metadata.json').read_text())
+            self.assertEqual(meta['KPlugin']['Id'],p.QUICK_SETTINGS)
+            self.assertTrue(os.access(target/'contents/code/status.sh',os.X_OK))
+            self.assertIn(p.QUICK_SETTINGS,[path.name for path in p.OWNED])
+
+    def test_every_widget_package_has_its_id(self):
+        for name in p.WIDGETS:
+            meta=json.loads((p.ROOT/'assets'/name/'metadata.json').read_text())
+            self.assertEqual(meta['KPlugin']['Id'],'org.kdewindowsstyle.'+name)
+
+    def test_default_city_comes_from_time_zone(self):
+        with patch.object(p,'run',return_value='America/Sao_Paulo'):
+            self.assertEqual(p.default_city(),'Sao Paulo')
+
+    def test_menu11_search_patch_applies_to_bundled_menu(self):
+        import tarfile
+        with tempfile.TemporaryDirectory() as tmp:
+            with tarfile.open(p.ROOT/'vendor/menu11-next.tar.gz') as tar:
+                tar.extract('contents/ui/MenuRepresentation.qml',tmp,filter='data')
+            qml=Path(tmp)/'contents/ui/MenuRepresentation.qml'
+            p.patch_menu11_search(qml)
+            text=qml.read_text()
+            self.assertIn('id: searchModeProbe',text)
+            self.assertIn('|| searchMode',text)

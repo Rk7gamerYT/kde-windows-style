@@ -27,11 +27,21 @@ Na sessão KDE, execute **sem sudo**:
 curl -fsSL https://raw.githubusercontent.com/Rk7gamerYT/kde-windows-style/main/windows11.sh | bash
 ```
 
-Esse único script instala o app no seu usuário e já aplica tudo: tema Win11OS escuro,
-ícones Win11, barra inferior de 48 px com Menu11 Next, botões das janelas à direita
-e os atalhos do Windows da tabela abaixo. Antes de qualquer mudança é criado um backup.
+Esse único script faz tudo sozinho, sem passos manuais:
+
+1. Instala as ferramentas do sistema que faltarem (pede sua senha uma vez, só se precisar),
+   no Ubuntu/Debian, Fedora, Arch ou openSUSE.
+2. Instala o app no seu usuário e prepara a interface gráfica.
+3. Prepara o DoorOS-Dolphin: já vem pronto no pacote completo; baixando do GitHub no
+   Ubuntu/Debian, é compilado uma única vez (10 a 20 minutos).
+4. Aplica o visual completo com backup: tema Win11OS escuro, ícones Win11, bordas das
+   janelas do Windows 11, menus translúcidos, barra com clima, Iniciar, Pesquisar, Visão de
+   tarefas, configurações rápidas, sino de notificações, apps em segundo plano na seta ^ e
+   os atalhos do Windows da tabela abaixo.
+
 Para escolher outras opções, passe-as depois de `bash -s --`, por exemplo
-`... | bash -s -- --theme light --opacity 94`. Dentro de uma pasta clonada, basta `./windows11.sh`.
+`... | bash -s -- --theme light --opacity 94`. `--no-dooros` pula o DoorOS-Dolphin e
+`--no-deps` não instala pacotes do sistema. Dentro de uma pasta clonada, basta `./windows11.sh`.
 
 Para desfazer:
 
@@ -87,6 +97,8 @@ redistribuídos como uma máquina virtual. O pacote usa os componentes do KDE in
 - Painel inferior de 48 px como no Windows 11: botão Iniciar e ícones dos apps centralizados; bandeja, relógio compacto (hora sobre a data) e mostrar desktop à direita. A ordem é persistida com o Plasma parado, evitando que o novo botão Iniciar seja jogado para a direita durante a inicialização.
 - Barra alinhada ao centro (Windows 11) ou à esquerda (Windows 10), com ícones de tamanho padrão (48 px) ou pequeno (40 px). À esquerda, o menu Iniciar abre junto ao botão, como no Windows.
 - Seção Recomendados do menu Iniciar pode ser escondida.
+- Itens da barra como no Windows 11: clima no canto esquerdo (temperatura, condição e previsão de 5 dias, cidade e °C/°F configuráveis no app; sem cidade, usa a do fuso horário), caixa **Pesquisar** ao lado do Iniciar (abre o menu Iniciar com a pesquisa já focada, como no Windows 11) e botão **Visão de tarefas** (Win + Tab). Cada um pode ser desligado no app. São widgets deste projeto em `assets/weather`, `assets/search` e `assets/taskview`.
+- Bandeja como a do Windows 11: um botão de configurações rápidas (Wi-Fi ou Ethernet, som e bateria) abre um painel com Wi-Fi, Bluetooth, modo avião, luz noturna, não incomodar e volume; o sino de notificações fica depois do relógio e os apps em segundo plano (Discord, Steam, navegadores...) ficam agrupados atrás da seta ^. Um app novo vai para a seta na primeira vez que aparece, com um recarregamento rápido do Plasma; se você fixar um ícone na barra pelas configurações da bandeja, ele fica fixado. O widget de configurações rápidas é deste projeto (`assets/quicksettings`). Clique com o botão direito num bloco para abrir as configurações dele.
 - Bordas das janelas Win11OS (Aurorae, da comunidade): cantos arredondados e botões largos minimizar, maximizar e fechar, nas versões clara e escura. Ou Breeze com borda fina.
 - Menus de contexto dos aplicativos translúcidos com desfoque, como os menus acrílicos do Windows 11 (acrílico, leve ou sólido). Vale para os apps abertos depois de aplicar.
 - Duplo clique para abrir arquivos, com os botões das janelas à direita.
@@ -197,7 +209,8 @@ a barra pode desaparecer por alguns segundos. Uma falha tenta restaurar o backup
 ./kde-windows-style.sh --dry-run
 ./kde-windows-style.sh --opacity 90 --style win11 --icon-theme win11 --launcher menu11 --theme dark
 ./kde-windows-style.sh --appearance-only --opacity 94 --no-icons --style breeze
-./kde-windows-style.sh --taskbar-align left --taskbar-size small --decoration win11 --menu-opacity 85 --no-recommended
+./kde-windows-style.sh --taskbar-align left --taskbar-size small --decoration win11 --menu-opacity 85 --no-recommended --tray win11
+./kde-windows-style.sh --weather-city "Rio de Janeiro" --no-search --no-taskview
 ./launch.sh
 ```
 

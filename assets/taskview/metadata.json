@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Rk7gamerYT"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "Mostra todas as janelas abertas, como no Windows 11",
+        "Description[en]": "Shows all open windows, like Windows 11",
+        "Icon": "view-app-grid-symbolic",
+        "Id": "org.kdewindowsstyle.taskview",
+        "License": "MIT",
+        "Name": "Visão de tarefas",
+        "Name[en]": "Task view",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

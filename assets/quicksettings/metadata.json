@@ -1,0 +1,16 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{"Name": "Rk7gamerYT"}],
+        "Category": "System Information",
+        "Description": "Wi-Fi, som, Bluetooth e outros ajustes num só painel, como no Windows 11",
+        "Description[en]": "Wi-Fi, sound, Bluetooth and more in one flyout, like Windows 11",
+        "Icon": "preferences-system",
+        "Id": "org.kdewindowsstyle.quicksettings",
+        "License": "MIT",
+        "Name": "Configurações rápidas",
+        "Name[en]": "Quick settings",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
